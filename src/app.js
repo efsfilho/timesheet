@@ -113,7 +113,7 @@ class App {
     let h = moment(time*1000).hours(); // *1000 correcao do timestamp unix
     let m = moment(time*1000).minutes();
     let f = moment(time*1000).format('HH:mm');
-    for (let i=0; i<h; i++){
+    for (let i = 0; i < h; i++){
       m = m + 60; // por hora
     }
   
@@ -179,16 +179,11 @@ class App {
       const outFileName = './out.xlsx';
 
       let obj = JSON.parse(data);
-      let ano = 0;
-      let mes = 0;
-      let dia = 0;
-      let regs = [];
+      let year = 0;
+      let month = 0;
+      let day = 0;
+      let fileRegs = [];
       let file = null;
-
-      // if (fs.existsSync('data/'+msg.from.id+'.xlsx'))
-      //   file = xlsx.readFile('data/'+msg.from.id+'.xlsx')
-      // else
-      //   file = xlsx.readFile('data/file.xlsx');   
 
       if (fs.existsSync(baseFileName)) {
         file = xlsx.readFile(baseFileName);
@@ -197,47 +192,34 @@ class App {
       }
 
       try {
-        for (let y = 0; y < obj.length; y++) {
-          let oy = obj[y];
-          ano = oy.y;
-          for(let m = 0; m < oy.m.length; m++){
-            let om = oy.m[m];
-            mes = om.m;
-            for (let d = 0; d < om.d.length; d++) {
-              dia = d+1;
+        for (let i = 0; i < obj.length; i++) {
+          let objYear = obj[i];
+          year = objYear.y;
+          for(let j = 0; j < objYear.m.length; j++){
+            let objMonth = objYear.m[j];
+            month = objMonth.m;
+            for (let l = 0; l < objMonth.d.length; l++) {
+              day = l+1;
               try {
-                regs.push({
-                  date: dia+'/'+mes+'/'+ano,
-                  reg: om.d[d].r
+                fileRegs.push({
+                  date: day+'/'+month+'/'+year,
+                  reg: objMonth.d[l].r
                 });
               } catch (err) {
-
+                throw err;
               }
             }
           }
         }
         
-        for (var i = 0; i < regs.length; i++) {
-          // console.log('A'+regs[i].reg);
-          var local = 'A'+(i+1);
-          this.addDate(file.Sheets.Plan1, local, regs[i].date);
+        for (let i = 0; i < fileRegs.length; i++) {
 
-          if (regs[i].reg.r1 != 0) {
-            local = 'B'+(i+1);
-            this.addTime(file.Sheets.Plan1, local, regs[i].reg.r1);
-          }
-          if (regs[i].reg.r2 != 0) {
-            local = 'C'+(i+1);
-            this.addTime(file.Sheets.Plan1, local, regs[i].reg.r2);
-          }
-          if (regs[i].reg.r3 != 0) {
-            local = 'D'+(i+1);
-            this.addTime(file.Sheets.Plan1, local, regs[i].reg.r3);
-          }
-          if (regs[i].reg.r4 != 0) {
-            local = 'E'+(i+1);
-            this.addTime(file.Sheets.Plan1, local, regs[i].reg.r4);
-          }
+          this.addDate(file.Sheets.Plan1, 'A'+(i+1), fileRegs[i].date);
+
+          fileRegs[i].reg.r1 != 0 ? this.addTime(file.Sheets.Plan1, 'B'+(i+1), fileRegs[i].reg.r1) : ''          
+          fileRegs[i].reg.r2 != 0 ? this.addTime(file.Sheets.Plan1, 'C'+(i+1), fileRegs[i].reg.r2) : ''
+          fileRegs[i].reg.r3 != 0 ? this.addTime(file.Sheets.Plan1, 'D'+(i+1), fileRegs[i].reg.r3) : ''
+          fileRegs[i].reg.r4 != 0 ? this.addTime(file.Sheets.Plan1, 'E'+(i+1), fileRegs[i].reg.r4) : ''
         }
 
         xlsx.writeFile(file, outFileName);
