@@ -7,4 +7,5 @@ let a = new App();
 // console.log(a.existsFile('./struct.json'));
 // a.saveFile({ teste: 'fdsfdsf'}, './teste.json');
 
-a.saveReg('./struct.json', 3, 1534284954);
+// a.saveReg('./struct.json', 3, 1534284954);
+a.export('./struct.json');

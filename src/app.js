@@ -108,16 +108,81 @@ class App {
     });
   }
 
+  addTime(worksheet, address, time) {
+  
+    let h = moment(time*1000).hours(); // *1000 correcao do timestamp unix
+    let m = moment(time*1000).minutes();
+    let f = moment(time*1000).format('HH:mm');
+    for (let i=0; i<h; i++){
+      m = m + 60; // por hora
+    }
+  
+    m = m/1440; // min 24 horas
+  
+    /* cell object */
+    let cell = {
+      t:'s', // numero
+      // v: m,
+      v: f// string
+    };
+  
+    // D5: { t: 'n', v: 0.7791666666666667, w: '18:42' },
+    /* assign type */
+    // if(typeof value == "string") cell.t = 's'; // string
+    // else if(typeof value == "number") cell.t = 'n'; // number
+    // else if(value === true || value === false) cell.t = 'b'; // boolean
+    // else if(value instanceof Date) cell.t = 'd';
+    // else throw new Error("cannot store value");
+  
+    /* add to worksheet, overwriting a cell if it exists */
+    worksheet[address] = cell;
+  
+    /* find the cell range */
+    let range = xlsx.utils.decode_range(worksheet['!ref']);
+    let addr = xlsx.utils.decode_cell(address);
+    // console.log(range);
+    // console.log(addr);
+  
+    /* extend the range to include the new cell */
+    if(range.s.c > addr.c) range.s.c = addr.c;
+    if(range.s.r > addr.r) range.s.r = addr.r;
+    if(range.e.c < addr.c) range.e.c = addr.c;
+    if(range.e.r < addr.r) range.e.r = addr.r;
+  
+    /* update range */
+    worksheet['!ref'] = xlsx.utils.encode_range(range);
+  }
+  
+  addDate(worksheet, address, date) {
+    let cell = {
+      t:'s',
+      v: date
+    };
+    worksheet[address] = cell;
+  
+    let range = xlsx.utils.decode_range(worksheet['!ref']);
+    let addr = xlsx.utils.decode_cell(address);
+    
+    if(range.s.c > addr.c) range.s.c = addr.c;
+    if(range.s.r > addr.r) range.s.r = addr.r;
+    if(range.e.c < addr.c) range.e.c = addr.c;
+    if(range.e.r < addr.r) range.e.r = addr.r;
+  
+    worksheet['!ref'] = xlsx.utils.encode_range(range);
+  }
+
   export(fileName) {
 
     this.readFile(fileName, (data) => {
 
-      const baseFileName = '';
+      const baseFileName = './file.xlsx';
+      const outFileName = './out.xlsx';
 
       let obj = JSON.parse(data);
-      // let year = 0;
-      // let month = 0;
-      // let day = 0;
+      let ano = 0;
+      let mes = 0;
+      let dia = 0;
+      let regs = [];
       let file = null;
 
       // if (fs.existsSync('data/'+msg.from.id+'.xlsx'))
@@ -125,73 +190,63 @@ class App {
       // else
       //   file = xlsx.readFile('data/file.xlsx');   
 
-      if (fs.existsSync('data/'+msg.from.id+'.xlsx')) {
+      if (fs.existsSync(baseFileName)) {
         file = xlsx.readFile(baseFileName);
       } else {
         file = xlsx.readFile('default.xlsx');
       }
 
       try {
-
-        for (let i = 0; i < obj.length; i++) {
-          let regs = obj[i];
-          let year = regs.year;
-          for(let j = 0; j < regs.months.length; j++){
-            let month = regs.months[j];
-            month = om.month;
-            for (let l = 0; l < om.days.length; l++) {
-              let day = l+1;
+        for (let y = 0; y < obj.length; y++) {
+          let oy = obj[y];
+          ano = oy.y;
+          for(let m = 0; m < oy.m.length; m++){
+            let om = oy.m[m];
+            mes = om.m;
+            for (let d = 0; d < om.d.length; d++) {
+              dia = d+1;
               try {
                 regs.push({
-                  date: day+'/'+month+'/'+year,
-                  reg: om.days[l].reg
+                  date: dia+'/'+mes+'/'+ano,
+                  reg: om.d[d].r
                 });
               } catch (err) {
-                // bot.sendMessage(msg.chat.id, 'Ocorreu um erro: 118');
+
               }
             }
           }
         }
-
+        
         for (var i = 0; i < regs.length; i++) {
           // console.log('A'+regs[i].reg);
           var local = 'A'+(i+1);
-          addDate(file.Sheets.Plan1, local, regs[i].date);
+          this.addDate(file.Sheets.Plan1, local, regs[i].date);
 
-          if (regs[i].reg.reg1 != 0) {
+          if (regs[i].reg.r1 != 0) {
             local = 'B'+(i+1);
-            addTime(file.Sheets.Plan1, local, regs[i].reg.reg1);
+            this.addTime(file.Sheets.Plan1, local, regs[i].reg.r1);
           }
-          if (regs[i].reg.reg2 != 0) {
+          if (regs[i].reg.r2 != 0) {
             local = 'C'+(i+1);
-            addTime(file.Sheets.Plan1, local, regs[i].reg.reg2);
+            this.addTime(file.Sheets.Plan1, local, regs[i].reg.r2);
           }
-          if (regs[i].reg.reg3 != 0) {
+          if (regs[i].reg.r3 != 0) {
             local = 'D'+(i+1);
-            addTime(file.Sheets.Plan1, local, regs[i].reg.reg3);
+            this.addTime(file.Sheets.Plan1, local, regs[i].reg.r3);
           }
-          if (regs[i].reg.reg4 != 0) {
+          if (regs[i].reg.r4 != 0) {
             local = 'E'+(i+1);
-            addTime(file.Sheets.Plan1, local, regs[i].reg.reg4);
+            this.addTime(file.Sheets.Plan1, local, regs[i].reg.r4);
           }
-          // addDate(file.Sheets.Plan1, local, regs[i].date);
-
-          // console.log(regs[i].date)
-          
-          // // console.log(ss.Sheets.Plan1);
-          // // console.log(ss.Sheets.Plan1);
         }
+
+        xlsx.writeFile(file, outFileName);
+
       } catch (err) {
-        // bot.sendMessage(msg.chat.id, 'Ocorreu um erro: 118');
         throw err;
       }
-
-
     });
-
-    
   }
-
 }
 
 module.exports = App;
