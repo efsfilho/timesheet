@@ -2,7 +2,32 @@ const fs     = require('fs');
 const moment = require('moment');
 const xlsx   = require('xlsx');
 
+
+const existsFile = (fileName) => {
+  return fs.existsSync(fileName, (err) => { if (err) throw err; });
+}
+
+const saveFile = (file, fileName) => {
+  /* só JSON */
+  fs.writeFile(fileName, JSON.stringify(file), (err) => { if (err) throw err; });
+}
+
+const readFile = (fileName, callb) => {
+  if (existsFile(fileName)) {
+    fs.readFile(fileName, 'utf8', (err, data) => {
+      if (err) throw err;
+      callb(data);
+    });
+  }
+}
+
 class App {
+
+  constructor() {
+    this.id = '';
+    this.regsFileName = '';
+    this.exportFileName ='';
+  }
 
   createStructure(id) {
     /* estrutura json com os registros */
@@ -47,37 +72,18 @@ class App {
 
   saveJSON(file, fileName) {
     /* TODO passar para um banco*/
-    if (!this.existsFile(nomeFile)) {
-      this.saveFile(file, fileName);
-    } else {
-      
+    if (!existsFile(fileName)) {
+      saveFile(file, fileName);
     }
   }
 
-  existsFile(fileName) {
-    return fs.existsSync(fileName, (err) => {
-      if (err) throw err;
-    });
-  }
-
-  saveFile(file, fileName) {
-    fs.writeFile(fileName, JSON.stringify(file), (err) => {
-      if (err) throw err;
-    });
-  }
-
-  readFile(fileName, callb) {
-    if (this.existsFile(fileName)) {
-      fs.readFile(fileName, 'utf8', (err, data) => {
-        if (err) throw err;
-        callb(data);
-      });
-    }
+  readJSON(fileName) {
+    
   }
 
   saveReg(fileName, typeReg, newTime) {
 
-    this.readFile(fileName, (data) => {
+    readFile(fileName, (data) => {
       
       let obj =   JSON.parse(data);
       let year =  moment(newTime * 1000).format('YYYY');
@@ -104,56 +110,13 @@ class App {
       } catch (err) {
         throw err;
       }
-      this.saveFile(obj, fileName);
+      saveFile(obj, fileName);
     });
   }
 
-  addTime(worksheet, address, time) {
-  
-    let h = moment(time*1000).hours(); // *1000 correcao do timestamp unix
-    let m = moment(time*1000).minutes();
-    let f = moment(time*1000).format('HH:mm');
-    for (let i = 0; i < h; i++){
-      m = m + 60; // por hora
-    }
-  
-    m = m/1440; // min 24 horas
-  
-    /* cell object */
-    let cell = {
-      t:'s', // numero
-      // v: m,
-      v: f// string
-    };
-  
-    // D5: { t: 'n', v: 0.7791666666666667, w: '18:42' },
-    /* assign type */
-    // if(typeof value == "string") cell.t = 's'; // string
-    // else if(typeof value == "number") cell.t = 'n'; // number
-    // else if(value === true || value === false) cell.t = 'b'; // boolean
-    // else if(value instanceof Date) cell.t = 'd';
-    // else throw new Error("cannot store value");
-  
-    /* add to worksheet, overwriting a cell if it exists */
-    worksheet[address] = cell;
-  
-    /* find the cell range */
-    let range = xlsx.utils.decode_range(worksheet['!ref']);
-    let addr = xlsx.utils.decode_cell(address);
-    // console.log(range);
-    // console.log(addr);
-  
-    /* extend the range to include the new cell */
-    if(range.s.c > addr.c) range.s.c = addr.c;
-    if(range.s.r > addr.r) range.s.r = addr.r;
-    if(range.e.c < addr.c) range.e.c = addr.c;
-    if(range.e.r < addr.r) range.e.r = addr.r;
-  
-    /* update range */
-    worksheet['!ref'] = xlsx.utils.encode_range(range);
-  }
-  
-  addDate(worksheet, address, date) {
+  /* Export */
+  addDate(worksheet, address, date) { // Adiciona data nas linhas da primeira coluna
+
     let cell = {
       t:'s',
       v: date
@@ -163,6 +126,36 @@ class App {
     let range = xlsx.utils.decode_range(worksheet['!ref']);
     let addr = xlsx.utils.decode_cell(address);
     
+    if(range.s.c > addr.c) range.s.c = addr.c;
+    if(range.s.r > addr.r) range.s.r = addr.r;
+    if(range.e.c < addr.c) range.e.c = addr.c;
+    if(range.e.r < addr.r) range.e.r = addr.r;
+  
+    worksheet['!ref'] = xlsx.utils.encode_range(range);
+  }
+
+  addTime(worksheet, address, time) { // Converte tempo 
+  
+    let h = moment(time*1000).hours(); // *1000 correcao do timestamp unix
+    let m = moment(time*1000).minutes();
+    let f = moment(time*1000).format('HH:mm');
+    for (let i = 0; i < h; i++){
+      m = m + 60; // por hora
+    }
+
+    m = m/1440; // min 24 horas
+  
+    let cell = {
+      t:'s', // numero
+      // v: m,
+      v: f// string
+    };
+    
+    worksheet[address] = cell; // adiciona na celula
+  
+    let range = xlsx.utils.decode_range(worksheet['!ref']);
+    let addr = xlsx.utils.decode_cell(address);
+  
     if(range.s.c > addr.c) range.s.c = addr.c;
     if(range.s.r > addr.r) range.s.r = addr.r;
     if(range.e.c < addr.c) range.e.c = addr.c;
@@ -229,6 +222,7 @@ class App {
       }
     });
   }
+  /* Export */
 }
 
 module.exports = App;
