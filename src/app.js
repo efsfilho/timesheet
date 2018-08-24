@@ -3,13 +3,13 @@ const moment = require('moment');
 const xlsx   = require('xlsx');
 
 
-const existsFile = (fileName) => {
+const existsFile = fileName => {
   return fs.existsSync(fileName, (err) => { if (err) throw err; });
 }
 
-const saveFile = (file, fileName) => {
+const saveFile = (file, fileName, fileType) => {
   /* só JSON */
-  fs.writeFile(fileName, JSON.stringify(file), (err) => { if (err) throw err; });
+  fs.writeFile(fileName, file, fileType, (err) => { if (err) throw err; });
 }
 
 const readFile = (fileName, callb) => {
@@ -24,14 +24,13 @@ const readFile = (fileName, callb) => {
 class App {
 
   constructor() {
-    this.id = '';
-    this.regsFileName = '';
+    this.id = 0;
+    this.regsFileName = './data/'+id;
     this.exportFileName ='';
   }
 
   createStructure(id) {
     /* estrutura json com os registros */
-    id = id || 0;
 
     let months = [];
     let days = [];
@@ -70,27 +69,39 @@ class App {
     return regStructure;
   }
 
+  init() {
+    if (existsFile('')) {
+    }
+    let structFile = this.createStructure(this.id);
+    this.saveJSON(structFile, 'fileNamesd');
+  }
+
   saveJSON(file, fileName) {
     /* TODO passar para um banco*/
     if (!existsFile(fileName)) {
-      saveFile(file, fileName);
+      saveFile(file, fileName, 'utf8');
     }
   }
 
   readJSON(fileName) {
-    
+    return new Promise((resolve, reject) => {
+      fs.readFile(fileName, 'utf8', (err, data) => {
+        err ? reject(err) : resolve(data);
+      });
+    });
   }
 
   saveReg(fileName, typeReg, newTime) {
 
-    readFile(fileName, (data) => {
-      
-      let obj =   JSON.parse(data);
-      let year =  moment(newTime * 1000).format('YYYY');
-      let month = moment(newTime * 1000).format('MM');
-      let day =   moment(newTime * 1000).format('DD');
+    this.readJSON().then(data => {
 
       try {
+
+        let obj =   JSON.parse(data);
+        let year =  moment(newTime * 1000).format('YYYY');
+        let month = moment(newTime * 1000).format('MM');
+        let day =   moment(newTime * 1000).format('DD');
+
         for (let i = 0; i < obj.length; i++) {
           if(obj[i].y == year){
             if (typeReg == 1) {
@@ -107,10 +118,12 @@ class App {
             }
           }
         }
+
+        saveFile(obj, fileName, 'utf8');
+
       } catch (err) {
         throw err;
       }
-      saveFile(obj, fileName);
     });
   }
 
