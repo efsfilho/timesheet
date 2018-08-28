@@ -25,7 +25,7 @@ class App {
 
   constructor() {
     this.id = 0;
-    this.regsFileName = './data/'+id;
+    this.regsFileName = './data/'+this.id;
     this.exportFileName ='';
   }
 
