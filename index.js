@@ -1,8 +1,6 @@
 const config = require('./config/index');
 
 const App = require('./src/app.js');
-const User = require('./src/user.js');
-
 
 // let a = new App();
 // a.saveFile(a.createStructure(), './struct.json');
@@ -13,13 +11,15 @@ const User = require('./src/user.js');
 // a.saveReg('./struct.json', 3, 1534284954);
 // a.export('./struct.json');
 
+
 let u = {
-  id: 0,
-  username: 'usernametest',
-  name: "UserName",
+  id: 1,
+  username: 'usernametest111111111',
+  name: "UserName11111111",
   bot: false,
   date: 'date'
 }
 
-let user = new User(u, config);
+let app = new App(config);
+
 

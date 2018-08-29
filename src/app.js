@@ -2,6 +2,7 @@ const fs     = require('fs');
 const moment = require('moment');
 const xlsx   = require('xlsx');
 
+const User   = require('./user');
 
 const existsFile = fileName => {
   return fs.existsSync(fileName, (err) => { if (err) throw err; });
@@ -23,14 +24,12 @@ const readFile = (fileName, callb) => {
 
 class App {
 
-  constructor() {
-    this.id = 0;
-    this.regsFileName = './data/'+this.id;
-    this.exportFileName ='';
+  constructor(config) {
+    this.userIndexLocal = config.userIndexLocal;  // local do arquivo com os usuarios
+    this.userRegsLocal = config.userRegsLocal;    // local dos registros
   }
 
-  createStructure(id) {
-    /* estrutura json com os registros */
+  getStructure(id) {
 
     let months = [];
     let days = [];

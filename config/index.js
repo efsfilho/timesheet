@@ -1,7 +1,7 @@
 
 let config = {
 
-  userIndexFile: './data',       // local do arquivo com os usuarios
+  userIndexLocal: './data',       // local do arquivo com os usuarios
   userRegsLocal: './data/regs'   // local dos registros
 
 };
