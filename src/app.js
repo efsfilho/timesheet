@@ -1,98 +1,37 @@
-const fs     = require('fs');
 const moment = require('moment');
 const xlsx   = require('xlsx');
 
 const User   = require('./user');
 
-const existsFile = fileName => {
-  return fs.existsSync(fileName, (err) => { if (err) throw err; });
-}
-
-const saveFile = (file, fileName, fileType) => {
-  /* só JSON */
-  fs.writeFile(fileName, file, fileType, (err) => { if (err) throw err; });
-}
-
-const readFile = (fileName, callb) => {
-  if (existsFile(fileName)) {
-    fs.readFile(fileName, 'utf8', (err, data) => {
-      if (err) throw err;
-      callb(data);
-    });
-  }
-}
+const existsFile = require('./utils').existsFile;
+const saveJSON =  require('./utils').saveJSON;
+const readJSON =  require('./utils').readJSON;
+const checkDir =  require('./utils').checkDir;
 
 class App {
 
   constructor(config) {
-    this.userIndexLocal = config.userIndexLocal;  // local do arquivo com os usuarios
-    this.userRegsLocal = config.userRegsLocal;    // local dos registros
+    this.config = config;
   }
 
-  getStructure(id) {
-
-    let months = [];
-    let days = [];
-    let dayMonth = 0;
-
-    for (let i = 0; i < 12; i++) {
-      dayMonth = moment({month: i}).daysInMonth(); // quantidade de dias do mes
-
-      for (let l = 1; l <= dayMonth; l++) {
-        days.push({
-          d: l,     // dia
-          r: {      // registros do dia
-            r1: 0,  // primeiro registro
-            r2: 0,  // segundo
-            r3: 0,
-            r4: 0   // ultimo
-          }
-        });
-      }
-
-      months.push({
-        m: moment({month: i}).format('MM'), // mês i
-        d: days
-      });
-
-      days = [];
-    }
-
-    let regStructure = [{
-      y: moment().format('YYYY'),  // ano atual
-      c: moment().format(),      // data/hora atual
-      id: id,
-      m: months
-    }];
-
-    return regStructure;
+  checkUser(user) {
+    new User(user, this.config);  // verifica/add usuario e regs
   }
 
-  init() {
-    if (existsFile('')) {
-    }
-    let structFile = this.createStructure(this.id);
-    this.saveJSON(structFile, 'fileNamesd');
+  addReg(user, typeReg, newTime) {
+
+    let userRegsFileName = this.config.userRegsLocal
+      +'/'+user.id+'.json';       // endereco com os registro do usuario
+    
+    // TODO validacao do typeReg
+    // TODO validacao do newTime
+    console.log(userRegsFileName);
+    this.updateReg(userRegsFileName, typeReg, newTime);
   }
+  
+  updateReg(fileName, typeReg, newTime) {
 
-  saveJSON(file, fileName) {
-    /* TODO passar para um banco*/
-    if (!existsFile(fileName)) {
-      saveFile(file, fileName, 'utf8');
-    }
-  }
-
-  readJSON(fileName) {
-    return new Promise((resolve, reject) => {
-      fs.readFile(fileName, 'utf8', (err, data) => {
-        err ? reject(err) : resolve(data);
-      });
-    });
-  }
-
-  saveReg(fileName, typeReg, newTime) {
-
-    this.readJSON().then(data => {
+    readJSON(fileName).then(data => {
 
       try {
 
@@ -118,12 +57,12 @@ class App {
           }
         }
 
-        saveFile(obj, fileName, 'utf8');
+        saveJSON(fileName, obj);
 
       } catch (err) {
         throw err;
       }
-    });
+    }).catch(err => console.log(err));
   }
 
   /* Export */
