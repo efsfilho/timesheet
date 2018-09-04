@@ -7,7 +7,7 @@ class Utils {
   }
 
   saveJSON(fileName, file){
-    /* TODO passar para banco*/
+    /* TODO passar para banco */
     // if (!existsFile(fileName)) {
       fs.writeFile(fileName, JSON.stringify(file), 'utf8', (err) => { if (err) throw err; });
     // }

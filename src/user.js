@@ -59,10 +59,10 @@ class User {
     // Object.keys(user).length > 0 ?       // TODO verificar objecto
 
     let usersfileName = this.userIndexLocal
-      +'/'+this.userIndexFilneName;         // arquivo com id dos usuarios
+      +this.userIndexFilneName;             // arquivo com id dos usuarios
 
     let regFileName = this.userRegsLocal
-      +'/'+this.user.id+'.json';            // nome do arquivo recebe o id do usuario
+      +this.user.id+'.json';                // nome do arquivo recebe o id do usuario
 
     if (existsFile(usersfileName)) {
 
