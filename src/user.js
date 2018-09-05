@@ -55,7 +55,7 @@ class User {
   checkUser() {
 
     const user = this.user;
-    // Object.keys(user).length > 0 ?       // TODO verificar objecto
+    // Object.keys(user).length > 0 ?       // TODO verificar objeto
 
     const usersFileName = this.userIndexLocal
       +this.userIndexFilneName;             // arquivo com id dos usuarios
@@ -65,28 +65,40 @@ class User {
 
     if (existsFile(usersFileName)) {
 
-      readJSON(usersFileName).then( data => {
-        let obj = data
-        let userExists = obj.filter( usr => usr.id == this.user.id ).length > 0;
-        if (!userExists) {
-          obj.push(this.user);              // adiciona o usuario aos outros existentes
-          saveJSON(usersFileName, obj);     // sobrescreve arquivo usuarios
-          logger.info('User adicionado: userId: '+user.id+' - '+user.username);
+      readJSON(usersFileName).then(data => {
+        try {
+          let obj = data
+          let userExists = obj.filter(usr => usr.id == this.user.id ).length > 0;
+          if (!userExists) {
+            obj.push(this.user);              // adiciona o usuario aos outros existentes
+            saveJSON(usersFileName, obj);     // sobrescreve arquivo usuarios
+            logger.info('User adicionado: userId: '+user.id+' - '+user.username);
+          }
+        } catch (err) {
+          logger.error('Erro ao adicionar o usuario > '+err);
         }
-      }).catch(err => logger.error(err));
+      }).catch(err => logger.error('Erro ao carregar usuarios > '+err));
       
     } else {
       // checkDir(this.userIndexLocal);        // verifica local do arquivo do usuario
       // checkDir(this.userRegsLocal);         // verifica local dos registros do usuario
-      saveJSON(usersFileName, [this.user]); // cria arquivo com o primeiro usuario
-      logger.info('Arquivo '+usersFileName+' criado.');
-      logger.info('User adicionado: userId: '+user.id+' - '+user.username);
+      try {
+        saveJSON(usersFileName, [this.user]);  // cria arquivo com o primeiro usuario
+        logger.info('Arquivo '+usersFileName+' criado.');
+        logger.info('User adicionado: userId: '+user.id+' - '+user.username);
+      } catch (err) {
+        logger.error('Erro ao criar o arquivo '+usersFileName+' > '+err);
+      }
     }
     
-    if(!existsFile(regFileName)) {          // verifica arquivo com registros do usuario
-      let reg = getDefaultStructure();
-      saveJSON(regFileName, reg);
-      logger.info('Arquivo '+regFileName+' criado.');
+    if(!existsFile(regFileName)) {              // verifica arquivo com registros do usuario
+      try {
+        let reg = getDefaultStructure();
+        saveJSON(regFileName, reg);
+        logger.info('Arquivo '+regFileName+' criado.');
+      } catch (err) {
+        logger.error('Erro ao criar o arquivo '+regFileName+' > '+err);
+      }
     }
   }
 }

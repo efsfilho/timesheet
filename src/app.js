@@ -13,6 +13,7 @@ class App {
   constructor(config) {
     this.config = config;
     this.user = null;
+    this.checkDirectories();
   }
 
   checkDirectories() {

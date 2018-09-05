@@ -3,13 +3,13 @@ const fs = require('fs');
 class Utils {
 
   static existsFile(fileName) {
-    return fs.existsSync(fileName, (err) => { if (err) throw err; });
+    return fs.existsSync(fileName, err => { if (err) throw err; });
   }
 
-  static saveJSON(fileName, file){
+  static saveJSON(fileName, file) {
     /* TODO passar para banco */
     // if (!existsFile(fileName)) {
-      fs.writeFile(fileName, JSON.stringify(file), 'utf8', err => { if (err) throw err; });
+    fs.writeFile(fileName, JSON.stringify(file), 'utf8', (err) => { if (err) throw err; });
     // }
   }
 
