@@ -1,7 +1,7 @@
 const mm = require('moment');
 const logger = require('./logger');
 
-const { existsFile, saveJSON, readJSON, checkDir } = require('./src/utils');
+const { existsFile, saveJSON, readJSON, checkDir } = require('./utils.js');
 
 const getDefaultStructure = () => {
 
@@ -43,49 +43,50 @@ const getDefaultStructure = () => {
 
 class User {
 
-  constructor(user, config) {
-    this.user = user;
+  constructor(userData, config) {
+    this.user = userData;
     this.userIndexLocal = config.userIndexLocal;  // local do arquivo com os usuarios
     this.userRegsLocal = config.userRegsLocal;    // local dos registros
     this.userIndexFilneName = 'user.json';        // arquivo com os usuarios
     this.checkUser();
+    return this.user;
   }
 
   checkUser() {
 
+    const user = this.user;
     // Object.keys(user).length > 0 ?       // TODO verificar objecto
 
-    let usersfileName = this.userIndexLocal
+    const usersFileName = this.userIndexLocal
       +this.userIndexFilneName;             // arquivo com id dos usuarios
 
-    let regFileName = this.userRegsLocal
+    const regFileName = this.userRegsLocal
       +this.user.id+'.json';                // nome do arquivo recebe o id do usuario
 
-    if (existsFile(usersfileName)) {
+    if (existsFile(usersFileName)) {
 
-      readJSON(usersfileName).then( data => {
-        let obj = [data]
+      readJSON(usersFileName).then( data => {
+        let obj = data
         let userExists = obj.filter( usr => usr.id == this.user.id ).length > 0;
         if (!userExists) {
           obj.push(this.user);              // adiciona o usuario aos outros existentes
-          saveJSON(usersfileName, obj);     // sobrescreve arquivo usuarios
-          logger.info('user adicionado: userId: '+usr.id+' - '+msg.from.first_name+' '+msg.from.last_name);
+          saveJSON(usersFileName, obj);     // sobrescreve arquivo usuarios
+          logger.info('User adicionado: userId: '+user.id+' - '+user.username);
         }
       }).catch(err => logger.error(err));
       
     } else {
       checkDir(this.userIndexLocal);        // verifica local do arquivo do usuario
       checkDir(this.userRegsLocal);         // verifica local dos registros do usuario
-      saveJSON(usersfileName, [this.user]); // cria arquivo com o primeiro usuario
-      logger.info('Arquivo criado: '+usersFileName);
-      logger.info('user adicionado: userId: '+usr.id+' - '+msg.from.first_name+' '+msg.from.last_name);
+      saveJSON(usersFileName, [this.user]); // cria arquivo com o primeiro usuario
+      logger.info('Arquivo '+usersFileName+' criado.');
+      logger.info('User adicionado: userId: '+user.id+' - '+user.username);
     }
     
     if(!existsFile(regFileName)) {          // verifica arquivo com registros do usuario
       let reg = getDefaultStructure();
       saveJSON(regFileName, reg);
-      logger.info('Arquivo criado: '+regFileName);
-      logger.info('Arquivo de registros criado. userId: '+usr.id);
+      logger.info('Arquivo '+regFileName+' criado.');
     }
   }
 }
