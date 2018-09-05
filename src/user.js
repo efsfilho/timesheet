@@ -1,9 +1,7 @@
 const mm = require('moment');
+const logger = require('./logger');
 
-const existsFile = require('./utils').existsFile;
-const saveJSON =  require('./utils').saveJSON;
-const readJSON =  require('./utils').readJSON;
-const checkDir =  require('./utils').checkDir;
+const { existsFile, saveJSON, readJSON, checkDir } = require('./src/utils');
 
 const getDefaultStructure = () => {
 
@@ -50,7 +48,6 @@ class User {
     this.userIndexLocal = config.userIndexLocal;  // local do arquivo com os usuarios
     this.userRegsLocal = config.userRegsLocal;    // local dos registros
     this.userIndexFilneName = 'user.json';        // arquivo com os usuarios
-    this.log = '';                                // user criado ou adicionado
     this.checkUser();
   }
 
@@ -72,21 +69,23 @@ class User {
         if (!userExists) {
           obj.push(this.user);              // adiciona o usuario aos outros existentes
           saveJSON(usersfileName, obj);     // sobrescreve arquivo usuarios
-          console.log('adicionado');        // TODO fazer um log decente
+          logger.info('user adicionado: userId: '+usr.id+' - '+msg.from.first_name+' '+msg.from.last_name);
         }
-      }).catch(err => console.log(err));
-
+      }).catch(err => logger.error(err));
+      
     } else {
       checkDir(this.userIndexLocal);        // verifica local do arquivo do usuario
       checkDir(this.userRegsLocal);         // verifica local dos registros do usuario
       saveJSON(usersfileName, [this.user]); // cria arquivo com o primeiro usuario
-      console.log('user criado');           // TODO log
+      logger.info('Arquivo criado: '+usersFileName);
+      logger.info('user adicionado: userId: '+usr.id+' - '+msg.from.first_name+' '+msg.from.last_name);
     }
-
+    
     if(!existsFile(regFileName)) {          // verifica arquivo com registros do usuario
       let reg = getDefaultStructure();
       saveJSON(regFileName, reg);
-      console.log('regs criado');
+      logger.info('Arquivo criado: '+regFileName);
+      logger.info('Arquivo de registros criado. userId: '+usr.id);
     }
   }
 }

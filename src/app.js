@@ -2,11 +2,9 @@ const moment = require('moment');
 const xlsx   = require('xlsx');
 
 const User   = require('./user');
+const logger = require('./logger');
 
-const existsFile = require('./utils').existsFile;
-const saveJSON =  require('./utils').saveJSON;
-const readJSON =  require('./utils').readJSON;
-const checkDir =  require('./utils').checkDir;
+const { existsFile, saveJSON, readJSON, checkDir } = require('./src/utils');
 
 class App {
 
@@ -21,11 +19,10 @@ class App {
   addReg(user, typeReg, newTime) {
 
     let userRegsFileName = this.config.userRegsLocal
-      +'/'+user.id+'.json';       // endereco com os registro do usuario
+      +user.id+'.json';           // endereco com os registro do usuario
     
     // TODO validacao do typeReg
     // TODO validacao do newTime
-    console.log(userRegsFileName);
     this.updateReg(userRegsFileName, typeReg, newTime);
   }
   
