@@ -76,8 +76,8 @@ class User {
       }).catch(err => logger.error(err));
       
     } else {
-      checkDir(this.userIndexLocal);        // verifica local do arquivo do usuario
-      checkDir(this.userRegsLocal);         // verifica local dos registros do usuario
+      // checkDir(this.userIndexLocal);        // verifica local do arquivo do usuario
+      // checkDir(this.userRegsLocal);         // verifica local dos registros do usuario
       saveJSON(usersFileName, [this.user]); // cria arquivo com o primeiro usuario
       logger.info('Arquivo '+usersFileName+' criado.');
       logger.info('User adicionado: userId: '+user.id+' - '+user.username);

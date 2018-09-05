@@ -16,14 +16,21 @@ class App {
   }
 
   checkDirectories() {
-
+    try {
+      checkDir(this.config.userIndexLocal);               // verifica local do arquivo do usuario
+      checkDir(this.config.userRegsLocal);                // verifica local dos registros do usuario
+      checkDir(this.config.exportLocal);
+    } catch (err) {
+      logger.error('Diretorios padrão não criados > '+err);
+    }
   }
 
   syncUser(userObj) {
     try {
-      this.user = new User(userObj, this.config);  // verifica/add usuario e regs
+      this.user = new User(userObj, this.config);         // verifica/add usuario e regs
     } catch (err) {
-      logger.error(err);
+      this.user = null;
+      logger.error('Erro ao sincronizar usuario > '+err);
     }
   }
 
@@ -34,6 +41,7 @@ class App {
     
     // TODO validacao do typeReg
     // TODO validacao do newTime
+    // TODO registrar log
     this.updateReg(userRegsFileName, typeReg, newTime);
   }
   
@@ -67,10 +75,9 @@ class App {
         saveJSON(fileName, data);
 
       } catch (err) {
-        logger.error('Erro ao registrar ponto.');
-        logger.error(err);
+        logger.error('Erro ao registrar ponto > '+err);
       }
-    }).catch(err => logger.error(err));
+    }).catch(err => logger.error('Erro ao ler ponto > '+err));
   }
 
   /* Export */
@@ -130,7 +137,7 @@ class App {
 
     if(this.user == null) {
       logger.info('Usuario não sincronizado');
-      return '';
+      return;
     }
 
     const baseFileName = this.config.userRegsLocal

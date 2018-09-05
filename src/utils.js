@@ -28,8 +28,8 @@ class Utils {
   }
 
   static checkDir(dir) {  // cria diretorio se nao existir
-    if (!fs.existsSync(dir, err => console.log(err))) {
-      fs.mkdir(dir, err => console.log(err));
+    if (!fs.existsSync(dir, err => { if (err) throw err })) {
+      fs.mkdir(dir, err => { if (err) throw err });
     }
   }
   

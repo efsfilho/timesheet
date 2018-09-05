@@ -18,6 +18,8 @@
   "homepage": "https://github.com/efsfilho/timesheetbot#readme",
   "dependencies": {
     "moment": "^2.22.2",
+    "node-telegram-bot-api": "^0.30.0",
+    "winston": "^3.0.0",
     "xlsx": "^0.13.3"
   }
 }

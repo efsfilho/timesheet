@@ -4,15 +4,13 @@ const App = require('./src/app.js');
 
 let u = {
   id: 1111,
-  username: 'usernametest111111111',
-  name: "UserName11111111",
+  username: 'usertest11',
+  name: "UserName11",
   bot: false,
   date: 'date'
 }
-
 let a = new App(config);
-a.checkUser(u);
-a.addReg(u, 1, 123456)
-
-
-
+a.syncUser(u);
+// a.export();
+// console.log(a);
+// a.addReg(u, 4, 1536157901)
