@@ -9,7 +9,7 @@ class Utils {
   static saveJSON(fileName, file){
     /* TODO passar para banco */
     // if (!existsFile(fileName)) {
-      fs.writeFile(fileName, JSON.stringify(file), 'utf8', (err) => { if (err) throw err; });
+      fs.writeFile(fileName, JSON.stringify(file), 'utf8', err => { if (err) throw err; });
     // }
   }
 
@@ -17,7 +17,12 @@ class Utils {
     /* TODO passar para banco */
     return new Promise((resolve, reject) => {
       fs.readFile(fileName, 'utf8', (err, data) => {
-        err ? reject(err) : resolve(data);
+        // err ? reject(err) : resolve(JSON.parse(data));
+        if (err) {
+          reject(err);
+        } else {
+          data.length > 0 ? resolve(JSON.parse(data)) : reject(new Error('JSON vazio'));
+        }
       });
     });
   }
