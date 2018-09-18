@@ -14,3 +14,4 @@ a.syncUser(u);
 // a.export();
 // console.log(a);
 // a.addReg(u, 4, 1536157901)
+console.log(a.getReg(u, 1536157901));
