@@ -9,7 +9,16 @@ class Utils {
   static saveJSON(fileName, file) {
     /* TODO passar para banco */
     // if (!existsFile(fileName)) {
-    fs.writeFile(fileName, JSON.stringify(file), 'utf8', (err) => { if (err) throw err; });
+    // fs.writeFile(fileName, JSON.stringify(file), 'utf8', err => { if (err) throw err; });
+    return new Promise((resolve, reject) => {
+      fs.writeFile(fileName, JSON.stringify(file), 'utf8', err => {
+        if (err) {
+          reject(false);
+        } else {
+          resolve(true);
+        }
+      });
+    });
     // }
   }
 
