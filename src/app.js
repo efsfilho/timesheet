@@ -46,29 +46,55 @@ class App {
     this.updateReg(userRegsFileName, typeReg, newTime);
   }
   
-  updateReg(fileName, typeReg, newTime) {
+  getReg(user, dateTime) {
+    let userRegsFileName = this.config.userRegsLocal
+      +user.id+'.json';
+
+    readJSON(userRegsFileName).then(data => {
+
+      let year  = moment(dateTime * 1000).year();
+      let month = moment(dateTime * 1000).month();
+      let day   = moment(dateTime * 1000).day();
+      var reg;
+      try {
+        for (let i = 0; i < data.length; i++) {
+          if(data[i].y === year){
+            // reg = data[i].m[m-1].d[d-1].r;
+            // reg = data[i].m[month].d[day].r;
+            console.log(month)
+            // resolve(reg);
+          }
+        }
+      } catch(err) {
+        console.log(err);
+      }
+      
+    }).catch(err => console.log(err))
+  }
+
+  updateReg(fileName, typeReg, dateTime) {
 
     readJSON(fileName).then(data => {
       
       try {
-        /* dia, mes e ano baseado no newTime(epoch) */
-        let year  = moment(newTime * 1000).format('YYYY');
-        let month = moment(newTime * 1000).format('MM');
-        let day   = moment(newTime * 1000).format('DD');
+        /* dia, mes e ano baseado no dateTime(epoch) */
+        let year  = moment(dateTime * 1000).format('YYYY');
+        let month = moment(dateTime * 1000).format('MM');
+        let day   = moment(dateTime * 1000).format('DD');
 
         for (let i = 0; i < data.length; i++) {           // conjunto de registros por ano
           if(data[i].y == year){                          // registro do ano
             if (typeReg == 1) {                           
-              data[i].m[month-1].d[day-1].r.r1 = newTime; // comeco jornada 
+              data[i].m[month-1].d[day-1].r.r1 = dateTime; // comeco jornada 
             }
             if (typeReg == 2) {
-              data[i].m[month-1].d[day-1].r.r2 = newTime; // comeco almoco
+              data[i].m[month-1].d[day-1].r.r2 = dateTime; // comeco almoco
             }
             if (typeReg == 3) {
-              data[i].m[month-1].d[day-1].r.r3 = newTime; // fim almoco 
+              data[i].m[month-1].d[day-1].r.r3 = dateTime; // fim almoco 
             }
             if (typeReg == 4) {
-              data[i].m[month-1].d[day-1].r.r4 = newTime; // fim jornada
+              data[i].m[month-1].d[day-1].r.r4 = dateTime; // fim jornada
             }
           }
         }
