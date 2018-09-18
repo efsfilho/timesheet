@@ -3,11 +3,10 @@ process.env["NTBA_FIX_319"] = 1;
 const Bot = require('node-telegram-bot-api');
 const config = require('../config/index');
 const App = require('./app.js');
-
-const api_key = '';
-
-const bot = new Bot(api_key, { polling: true });
 const mm = require('moment');
+
+const key = '';
+const bot = new Bot(key, { polling: true });
 const app = new App(config);
 
 bot.on('text', msg => {
@@ -20,7 +19,6 @@ bot.on('text', msg => {
 });
 
 bot.onText(/r1/, msg => {
-  console.log(msg.date)
   app.addReg(1, msg.date);
 });
 
@@ -249,16 +247,16 @@ const getReg = date => {
       // console.log(data)
       var key = [[
         {
-          text: data.r1 > 0 ? mm(data.r1 * 1000).format('HH:mm') : '-',
+          text: data.r1 > 0 ? mm(data.r1).format('HH:mm') : '-',
           callback_data: '.1'+data.date
         },{
-          text: data.r2 > 0 ? mm(data.r2 * 1000).format('HH:mm') : '-',
+          text: data.r2 > 0 ? mm(data.r2).format('HH:mm') : '-',
           callback_data: '.2'+data.date
         },{
-          text: data.r3 > 0 ? mm(data.r3 * 1000).format('HH:mm') : '-',
+          text: data.r3 > 0 ? mm(data.r3).format('HH:mm') : '-',
           callback_data: '.3'+data.date
         },{
-          text: data.r4 > 0 ? mm(data.r4 * 1000).format('HH:mm') : '-',
+          text: data.r4 > 0 ? mm(data.r4).format('HH:mm') : '-',
           callback_data: '.4'+data.date
         }
       ]];

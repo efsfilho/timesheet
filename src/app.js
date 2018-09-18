@@ -118,7 +118,7 @@ class App {
         let year  = moment(dateTime).year();
         let month = moment(dateTime).month();
         let day   = moment(dateTime).date();
-
+        console.log(moment(dateTime).format()+' AAAAA')
         for (let i = 0; i < data.length; i++) {           // conjunto de registros por ano
           if(data[i].y == year){                          // registro do ano
             if (typeReg == 1) {                           
