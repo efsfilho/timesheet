@@ -25,7 +25,7 @@ const getDefaultStructure = () => {
     }
 
     months.push({
-      m: mm({month: i}).format('MM'), // mês i
+      m: mm({month: i}).month(), // mês i
       d: days
     });
 

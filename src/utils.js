@@ -8,7 +8,6 @@ class Utils {
 
   static saveJSON(fileName, file) {
     /* TODO passar para banco */
-    // if (!existsFile(fileName)) {
     // fs.writeFile(fileName, JSON.stringify(file), 'utf8', err => { if (err) throw err; });
     return new Promise((resolve, reject) => {
       fs.writeFile(fileName, JSON.stringify(file), 'utf8', err => {
@@ -19,7 +18,6 @@ class Utils {
         }
       });
     });
-    // }
   }
 
   static readJSON(fileName) {
@@ -36,7 +34,7 @@ class Utils {
     });
   }
 
-  static checkDir(dir) {  // cria diretorio se nao existir
+  static checkDir(dir) {                                  // cria diretorio se nao existir
     if (!fs.existsSync(dir, err => { if (err) throw err })) {
       fs.mkdir(dir, err => { if (err) throw err });
     }

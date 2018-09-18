@@ -26,6 +26,17 @@ class App {
     }
   }
 
+  
+  /** Registra o usuario para outras operacoes */
+  /**
+   * 
+   * @param {object} userObj - usuario
+   * @param {number} userObj.id - id do contato
+   * @param {string} userObj.username - username do contato
+   * @param {number} userObj.name - nomde do contato
+   * @param {boolean} userObj.bot
+   * @param {number} userObj.date - data do chat
+   */
   syncUser(userObj) {
     try {
       this.user = new User(userObj, this.config);         // verifica/add usuario e regs
@@ -35,41 +46,66 @@ class App {
     }
   }
 
-  addReg(user, typeReg, newTime) {
+  /**
+   * Adiciona registro de ponto
+   * @param {number} typeReg - tipo de registro (1,2,3 ou 4)
+   * @param {number} newTime - epoch
+   */
+  addReg(typeReg, newTime) {
 
-    let userRegsFileName = this.config.userRegsLocal      // endereco com os registro do usuario
-      +user.id+'.json';
+    if (this.user == null) {
+      /* TODO log  */
+      reject('Não foi possivel....');
+    } else {
+      let userRegsFileName = this.config.userRegsLocal      // endereco com os registro do usuario
+      +this.user.id+'.json';
     
-    // TODO validacao do typeReg
-    // TODO validacao do newTime
-    // TODO registrar log
-    this.updateReg(userRegsFileName, typeReg, newTime);
+      // TODO validacao do typeReg
+      // TODO validacao do newTime
+      // TODO registrar log
+      this.updateReg(userRegsFileName, typeReg, newTime* 1000);
+    }
+
   }
-  
-  getReg(user, dateTime) {
-    let userRegsFileName = this.config.userRegsLocal
-      +user.id+'.json';
 
-    readJSON(userRegsFileName).then(data => {
-
-      let year  = moment(dateTime * 1000).year();
-      let month = moment(dateTime * 1000).month();
-      let day   = moment(dateTime * 1000).day();
-      var reg;
-      try {
-        for (let i = 0; i < data.length; i++) {
-          if(data[i].y === year){
-            // reg = data[i].m[m-1].d[d-1].r;
-            // reg = data[i].m[month].d[day].r;
-            console.log(month)
-            // resolve(reg);
-          }
-        }
-      } catch(err) {
-        console.log(err);
+  /**
+   * Retorna ponto do dia
+   * @param {string} dateTime - Dia selecionado (format YYYY-MM-DD).
+   */
+  getReg(dateTime) {
+    return new Promise((resolve, reject) => {
+      if (this.user == null) {
+        /* TODO log  */
+        reject('Não foi possivel....');
       }
-      
-    }).catch(err => console.log(err))
+      let userRegsFileName = this.config.userRegsLocal
+        +this.user.id+'.json';
+
+      readJSON(userRegsFileName).then(data => {
+
+        let year  = moment(dateTime).year();
+        let month = moment(dateTime).month();
+        let day   = moment(dateTime).date();
+
+        try {
+          for (let i = 0; i < data.length; i++) {
+            if(data[i].y == year){                        // data[i].y string
+              let reg = {
+                date: moment(dateTime).format('YYYY-MM-DD'),
+                r1: data[i].m[month].d[day].r.r1,
+                r2: data[i].m[month].d[day].r.r2,
+                r3: data[i].m[month].d[day].r.r3,
+                r4: data[i].m[month].d[day].r.r4
+              }
+              resolve(reg);
+            }
+          }
+        } catch(err) {
+          console.log(err);
+        }
+
+      }).catch(err => console.log(err))
+    });
   }
 
   updateReg(fileName, typeReg, dateTime) {
@@ -78,29 +114,30 @@ class App {
       
       try {
         /* dia, mes e ano baseado no dateTime(epoch) */
-        let year  = moment(dateTime * 1000).format('YYYY');
-        let month = moment(dateTime * 1000).format('MM');
-        let day   = moment(dateTime * 1000).format('DD');
+
+        let year  = moment(dateTime).year();
+        let month = moment(dateTime).month();
+        let day   = moment(dateTime).date();
 
         for (let i = 0; i < data.length; i++) {           // conjunto de registros por ano
           if(data[i].y == year){                          // registro do ano
             if (typeReg == 1) {                           
-              data[i].m[month-1].d[day-1].r.r1 = dateTime; // comeco jornada 
+              data[i].m[month].d[day].r.r1 = dateTime;    // comeco jornada 
             }
             if (typeReg == 2) {
-              data[i].m[month-1].d[day-1].r.r2 = dateTime; // comeco almoco
+              data[i].m[month].d[day].r.r2 = dateTime;    // comeco almoco
             }
             if (typeReg == 3) {
-              data[i].m[month-1].d[day-1].r.r3 = dateTime; // fim almoco 
+              data[i].m[month].d[day].r.r3 = dateTime;    // fim almoco 
             }
             if (typeReg == 4) {
-              data[i].m[month-1].d[day-1].r.r4 = dateTime; // fim jornada
+              data[i].m[month].d[day].r.r4 = dateTime;    // fim jornada
             }
           }
         }
 
-        saveJSON(fileName, data);
-
+        saveJSON(fileName, data); //.then(a => console.log(a));
+        /* TODO retorno de sucesso */
       } catch (err) {
         logger.error('Erro ao registrar ponto > '+err);
       }
