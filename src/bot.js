@@ -9,7 +9,7 @@ const key = '';
 const bot = new Bot(key, { polling: true });
 const app = new App(config);
 
-bot.on('text', msg => {
+bot.on('message', msg => {
 
   let user = getUser(msg);
   if (app.user == null) {
@@ -18,14 +18,17 @@ bot.on('text', msg => {
 
 });
 
-bot.onText(/r1/, msg => {
-  app.addReg(1, msg.date);
-});
+bot.onText(/p1/, msg => app.addReg(1, msg.date));
+bot.onText(/p2/, msg => app.addReg(2, msg.date));
+bot.onText(/p3/, msg => app.addReg(3, msg.date));
+bot.onText(/p4/, msg => app.addReg(4, msg.date));
 
 bot.onText(/\ba/, msg => {
+
   const chatId = msg.chat.id;
   let date = mm(msg.chat.time);
-  console.log('1 '+date)
+  // console.log('1 '+date)
+  setKeyBoard(msg);
   keyBoardCalender(date).then(key => {
     bot.sendMessage(chatId, 'Registros: ', {
       reply_markup: {
@@ -34,6 +37,7 @@ bot.onText(/\ba/, msg => {
       }
     });
   }).catch(err => console.log(err));
+
 });
 
 bot.on('callback_query', callbackQuery => {
@@ -41,9 +45,9 @@ bot.on('callback_query', callbackQuery => {
   const msg = callbackQuery.message;
   const opts = {
     chat_id: msg.chat.id,
-    message_id: msg.message_id,
+    message_id: msg.message_id
   };
-
+  
   if (action === '-') {
   }
 
@@ -55,7 +59,6 @@ bot.on('callback_query', callbackQuery => {
 
   // switch (true) {
   //   case /<|>/.test(action):
-
   //     break;
   //   default:
   //     console.log(action)
@@ -64,12 +67,14 @@ bot.on('callback_query', callbackQuery => {
 
   if (/<|>/.exec(action) !== null) {                      // botao avanca/retrocede mes
     updateKeyboard(action).then(key => {                  // padrao +000-00-00T00:00:00-00:00
+      setKeyBoard(opts);
       bot.editMessageReplyMarkup(key, opts);
     }).catch(err => console.log(err));
   }
 
   if (/\+/.exec(action) !== null) {                       // botao dia
     getReg(action).then(key => {
+      
       bot.editMessageReplyMarkup(key, opts);
     }).catch(err => console.log(err));
   }
@@ -77,7 +82,6 @@ bot.on('callback_query', callbackQuery => {
     bot.editMessageText(action, opts);                    // padrao .42018-09-18
   }
 
-  // bot.editMessageText(text, opts);
 });
 
 /* TODO on error*/
@@ -237,7 +241,7 @@ const updateKeyboard = action => {                        // atualiza teclado co
   });
 }
 
-const getReg = date => {
+const getReg = date => {                                  // retorna registros do dia
   return new Promise(resolve => {
 
     let day = mm(date.replace(/\+/, '')).format('YYYY-MM-DD')

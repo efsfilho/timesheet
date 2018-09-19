@@ -18,6 +18,7 @@ class App {
 
   checkDirectories() {
     try {
+      checkDir(this.config.logLocal);                     // verifica local do log
       checkDir(this.config.userIndexLocal);               // verifica local do arquivo do usuario
       checkDir(this.config.userRegsLocal);                // verifica local dos registros do usuario
       checkDir(this.config.exportLocal);
@@ -38,6 +39,7 @@ class App {
    */
   syncUser(userObj) {
     try {
+      logger.log('dsfdf');
       this.user = new User(userObj, this.config);         // verifica/add usuario e regs
     } catch (err) {
       this.user = null;
@@ -54,11 +56,11 @@ class App {
 
     if (this.user == null) {
       /* TODO log  */
-      reject('Não foi possivel....');
+      reject('Não foi possivel...');
     } else {
 
       let userRegsFileName = this.config.userRegsLocal      // endereco com os registro do usuario
-      +this.user.id+'.json';
+        +this.user.id+'.json';
     
       // TODO validacao do typeReg
       // TODO validacao do newTime
@@ -151,7 +153,12 @@ class App {
     }).catch(err => logger.error('Erro ao ler ponto > '+err));
   }
 
-  /* Export */
+  /**
+   * Cria data no xlsx
+   * @param {object} worksheet - worksheet do xlsx
+   * @param {string} address - endereco da celula do worksheet
+   * @param {string} date - data do ponto
+   */
   addDate(worksheet, address, date) {
     
     /* Adiciona datas na primeira coluna */
@@ -173,6 +180,12 @@ class App {
     worksheet['!ref'] = xlsx.utils.encode_range(range);
   }
 
+  /**
+   * Cria hora no xlsx
+   * @param {object} worksheet - worksheet do xlsx
+   * @param {string} address - endereco da celula do worksheet
+   * @param {string} time - hora do ponto
+   */
   addTime(worksheet, address, time) {
     
     /* Adiciona tempo nas celulas */
@@ -204,6 +217,9 @@ class App {
     worksheet['!ref'] = xlsx.utils.encode_range(range);
   }
 
+  /**
+   * Escreve o xlsx no disco
+   */
   export() {
 
     if(this.user == null) {
