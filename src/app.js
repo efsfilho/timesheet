@@ -27,9 +27,8 @@ class App {
   }
 
   
-  /** Registra o usuario para outras operacoes */
   /**
-   * 
+   * Registra o usuario para outras operacoes
    * @param {object} userObj - usuario
    * @param {number} userObj.id - id do contato
    * @param {string} userObj.username - username do contato
@@ -74,19 +73,21 @@ class App {
    */
   getReg(dateTime) {
     return new Promise((resolve, reject) => {
+
       if (this.user == null) {
         /* TODO log  */
         reject('Não foi possivel....');
       }
+
       let userRegsFileName = this.config.userRegsLocal
         +this.user.id+'.json';
-
+      
       readJSON(userRegsFileName).then(data => {
 
         let year  = moment(dateTime).year();
         let month = moment(dateTime).month();
-        let day   = moment(dateTime).date();
-
+        let day   = moment(dateTime).date()-1;
+        
         try {
           for (let i = 0; i < data.length; i++) {
             if(data[i].y == year){                        // data[i].y string
