@@ -56,6 +56,7 @@ class App {
       /* TODO log  */
       reject('Não foi possivel....');
     } else {
+
       let userRegsFileName = this.config.userRegsLocal      // endereco com os registro do usuario
       +this.user.id+'.json';
     
@@ -86,7 +87,7 @@ class App {
 
         let year  = moment(dateTime).year();
         let month = moment(dateTime).month();
-        let day   = moment(dateTime).date()-1;
+        let day   = moment(dateTime).date()-1;            // array apartir do 0
         
         try {
           for (let i = 0; i < data.length; i++) {
@@ -109,17 +110,22 @@ class App {
     });
   }
 
+  /**
+   * Atualiza ponto
+   * @param {string} fileName - nome do arquivo dos registros
+   * @param {number} typeReg - tipo reg (1, 2, 3 ou 4)
+   * @param {number} dateTime 
+   */
   updateReg(fileName, typeReg, dateTime) {
 
     readJSON(fileName).then(data => {
       
       try {
-        /* dia, mes e ano baseado no dateTime(epoch) */
 
         let year  = moment(dateTime).year();
         let month = moment(dateTime).month();
-        let day   = moment(dateTime).date();
-        console.log(moment(dateTime).format()+' AAAAA')
+        let day   = moment(dateTime).date()-1;            // array apartir de 0
+
         for (let i = 0; i < data.length; i++) {           // conjunto de registros por ano
           if(data[i].y == year){                          // registro do ano
             if (typeReg == 1) {                           
