@@ -3,44 +3,6 @@ const logger = require('./logger');
 
 const { existsFile, saveJSON, readJSON, checkDir } = require('./utils.js');
 
-const getDefaultStructure = () => {
-
-  let months = [];
-  let days = [];
-  let dayMonth = 0;
-
-  for (let i = 0; i < 12; i++) {
-    dayMonth = mm({ month: i }).daysInMonth();            // quantidade de dias do mes
-
-    for (let l = 1; l <= dayMonth; l++) {
-      days.push({
-        d: l,             // dia
-        r: {              // registros do dia
-          r1: 0,          // primeiro registro
-          r2: 0,          // segundo
-          r3: 0,
-          r4: 0           // ultimo
-        }
-      });
-    }
-
-    months.push({
-      m: mm({month: i}).month(), // mês i
-      d: days
-    });
-
-    days = [];
-  }
-
-  let regStructure = [{
-    y: mm().format('YYYY'),  // ano atual
-    c: mm().format(),        // data/hora atual
-    m: months
-  }];
-
-  return regStructure;
-}
-
 /**  Usuario */
 class User {
 
@@ -60,12 +22,12 @@ class User {
     this.userIndexLocal = config.userIndexLocal;          // local do arquivo com os usuarios
     this.userRegsLocal = config.userRegsLocal;            // local dos registros
     this.userIndexFilneName = 'user.json';                // arquivo com os usuarios
-    this.checkUser();
+    this._checkUser();
     return this.user;
   }
 
   /** Verifica a existencia do usuario */
-  checkUser() {
+  _checkUser() {
     const user = this.user;
     // Object.keys(user).length > 0 ?       // TODO verificar objeto
 
@@ -103,13 +65,52 @@ class User {
     
     if(!existsFile(regFileName)) {                        // verifica arquivo com registros do usuario
       try {
-        let reg = getDefaultStructure();
+        let reg = this._getDefaultStructure();
         saveJSON(regFileName, reg);
         logger.info('Arquivo '+regFileName+' criado.');
       } catch (err) {
         logger.error('Erro ao criar o arquivo '+regFileName+' > checkUser: '+err);
       }
     }
+  }
+
+  /** Retorna estrutura do arquivo de pontos */
+  _getDefaultStructure() {
+
+    let months = [];
+    let days = [];
+    let dayMonth = 0;
+  
+    for (let i = 0; i < 12; i++) {
+      dayMonth = mm({ month: i }).daysInMonth();            // quantidade de dias do mes
+  
+      for (let l = 1; l <= dayMonth; l++) {
+        days.push({
+          d: l,             // dia
+          r: {              // registros do dia
+            r1: 0,          // primeiro registro
+            r2: 0,          // segundo
+            r3: 0,
+            r4: 0           // ultimo
+          }
+        });
+      }
+  
+      months.push({
+        m: mm({month: i}).month(), // mês i
+        d: days
+      });
+  
+      days = [];
+    }
+  
+    let regStructure = [{
+      y: mm().format('YYYY'),  // ano atual
+      c: mm().format(),        // data/hora atual
+      m: months
+    }];
+  
+    return regStructure;
   }
 }
 

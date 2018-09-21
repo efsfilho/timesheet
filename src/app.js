@@ -1,4 +1,4 @@
-const moment = require('moment');
+const mm = require('moment');
 const xlsx = require('xlsx');
 
 const User = require('./user');
@@ -52,6 +52,169 @@ class App {
   }
 
   /**
+   * Monta teclado calendario
+   * @param {number} date - unix timestamp
+   */
+  mountKeyboardCalendar(date) {
+    return new Promise((resolve, reject) => {
+
+      let prev = mm(date).subtract(1, 'month').format();  // callback query para o mes anterior
+      let next = mm(date).add(1, 'month').format();       // callback query para o proximo mes
+
+      let keyBoard = [
+        [                                                 // primeira linha do teclado
+          {
+            text: '<',
+            callback_data: '<'+prev
+          },{
+            text: date.format('MMMM YYYY'),
+            callback_data: '-'
+          },{
+            text: '>',
+            callback_data: '>'+next
+          }
+        ],[                                               // segunda linha
+          {
+            text: 'Dom',
+            callback_data: '-'
+          },{
+            text: 'Seg',
+            callback_data: '-'
+          },{
+            text: 'Ter',
+            callback_data: '-'
+          },{
+            text: 'Quar',
+            callback_data: '-'
+          },{
+            text: 'Qui',
+            callback_data: '-'
+          },{
+            text: 'Sex',
+            callback_data: '-'
+          },{
+            text: 'Sab',
+            callback_data: '-'
+          }
+        ]
+      ];
+  
+      this._getDayButtons(date.month()).then(res => {
+        if (res.ok) {
+          try {
+          
+            let days = res.result;
+            let weekCount = 6;
+            let buttons = [];
+            
+            for (let i = 0; i < days.length; i++) {
+      
+              let cbDate = mm({                               // callback query do dia
+                year: date.year(),
+                month: date.month(),
+                day: days[i]
+              });
+      
+              let button = {
+                text: ''+days[i],
+                // callback_data: ''+mm(date).day(i).format('DD/MM/YYYY')
+                callback_data: days[i] === '-' ? ''+days[i] : '+'+cbDate.format()
+              };
+      
+              buttons.push(button);
+      
+              if (i >= weekCount) {                           // limita a 7 colunas
+                keyBoard.push(buttons);                       // adiciona terceira até a oitava linha
+                weekCount += 7;
+                buttons = [];
+              }
+            }
+            resolve({
+              ok: true,
+              result: keyBoard
+            });
+          } catch (err) {
+            logger.error('Erro ao montar botoes > mountKeyboardCalendar: '+err);
+            reject({ ok: false });
+          }
+        }
+      }).catch(err => {
+        logger.error('Erro ao montar botoes > mountKeyboardCalendar: '+err);
+        reject({ ok: false });
+      });
+  
+    });
+  }
+  
+  /**
+   * Retorna array com os botoes dos dias 
+   * @param {number} month - mes do calendario exibido
+   */
+  _getDayButtons(month) {                                 // retorna estrutura com os dias do mês
+    return new Promise((resolve, reject) => {
+      try {      
+        let days = Array(42);
+        days.fill('-');
+        let dm = mm({ month: month }).daysInMonth();          // quantidade de dias do mes
+        let wd = mm({ month: month, day: 1}).weekday();      // primeiro dia da semana
+    
+        for (let i = 1; i <= dm; i++) {
+          days[wd] = i;
+          wd++;
+    
+          if (i == dm) {
+            resolve({
+              ok: true,
+              result: days
+            });
+          }
+        }
+      } catch (err) {
+        reject({ ok: false });
+      }
+    });
+  } 
+
+  /**
+   * Monta teclado com registro de pontos
+   * @param {string} date - moment date YYYY-MM-DD
+   */
+  mountKeyboardRegs(date) {
+    return new Promise((resolve, reject)=> {
+      /* TODO validar as pesquisas */
+      this._getReg(date).then(res => {
+        if (res.ok) {
+          let data = res.result;
+          let key = [[
+            {
+              text: data.r1 > 0 ? mm(data.r1).format('HH:mm') : '-',
+              callback_data: '.1'+data.date
+            },{
+              text: data.r2 > 0 ? mm(data.r2).format('HH:mm') : '-',
+              callback_data: '.2'+data.date
+            },{
+              text: data.r3 > 0 ? mm(data.r3).format('HH:mm') : '-',
+              callback_data: '.3'+data.date
+            },{
+              text: data.r4 > 0 ? mm(data.r4).format('HH:mm') : '-',
+              callback_data: '.4'+data.date
+            }
+          ]];
+          resolve({
+            ok: true,
+            result: { inline_keyboard: key }
+          });
+        } else {
+          reject({ ok: false });
+        }
+      }).catch(err => {
+        logger.error('Erro ao gerar teclado com registros > mountKeyboardRegs: '+err)
+        reject({ ok: false });
+      });    
+    });
+  }
+
+  /**
    * Adiciona registro de ponto
    * @param {number} typeReg - tipo de registro (1,2,3 ou 4)
    * @param {number} newTime - epoch
@@ -66,7 +229,7 @@ class App {
       // TODO validacao do typeReg
       // TODO validacao do newTime
       // TODO registrar log
-      this.updateReg(userRegsFileName, typeReg, newTime* 1000);
+      this._updateReg(userRegsFileName, typeReg, newTime* 1000);
     }
   }
 
@@ -76,14 +239,14 @@ class App {
    * @param {number} typeReg - tipo reg (1, 2, 3 ou 4)
    * @param {number} dateTime 
    */
-  updateReg(fileName, typeReg, dateTime) {
+  _updateReg(fileName, typeReg, dateTime) {
 
     readJSON(fileName).then(data => {
       
       try {
-        let year  = moment(dateTime).year();
-        let month = moment(dateTime).month();
-        let day   = moment(dateTime).date()-1;            // array apartir de 0
+        let year  = mm(dateTime).year();
+        let month = mm(dateTime).month();
+        let day   = mm(dateTime).date()-1;                // array apartir de 0
 
         for (let i = 0; i < data.length; i++) {           // conjunto de registros por ano
           if(data[i].y == year){                          // registro do ano
@@ -114,15 +277,12 @@ class App {
    * Retorna ponto do dia
    * @param {string} dateTime - Dia selecionado (format YYYY-MM-DD).
    */
-  getReg(dateTime) {
+  _getReg(dateTime) {
     return new Promise((resolve, reject) => {
 
       if (this.user == null) {                            // verifica usuario
         logger.error('getReg Ususario não sincronizado > getReg');
-        reject({
-          ok: false,
-          message: 'Usuário não sincronizado'
-        });
+        reject({ ok: false });
       }
 
       let userRegsFileName = this.config.userRegsLocal
@@ -130,15 +290,15 @@ class App {
       
       readJSON(userRegsFileName).then(data => {
 
-        let year  = moment(dateTime).year();
-        let month = moment(dateTime).month();
-        let day   = moment(dateTime).date()-1;            // array apartir do 0
+        let year  = mm(dateTime).year();
+        let month = mm(dateTime).month();
+        let day   = mm(dateTime).date()-1;                // array apartir do 0
         
         try {
           for (let i = 0; i < data.length; i++) {
             if(data[i].y == year){                        // data[i].y string
               let reg = {
-                date: moment(dateTime).format('YYYY-MM-DD'),
+                date: mm(dateTime).format('YYYY-MM-DD'),
                 r1: data[i].m[month].d[day].r.r1,
                 r2: data[i].m[month].d[day].r.r2,
                 r3: data[i].m[month].d[day].r.r3,
@@ -152,8 +312,12 @@ class App {
           }
         } catch(err) {
           logger.error('Erro ao recuperar registros > getReg: '+err);
+          reject({ ok: false });
         }
-      }).catch(err => logger.error('Erro ao ler registros > getReg: '+err))
+      }).catch(err => {
+        logger.error('Erro ao ler registros > getReg: '+err);
+        reject({ ok: false });
+      });
     });
   }
 
@@ -163,7 +327,7 @@ class App {
    * @param {string} address - endereco da celula do worksheet
    * @param {string} date - data do ponto
    */
-  addDate(worksheet, address, date) {
+  _addDate(worksheet, address, date) {
     
     /* Adiciona datas na primeira coluna */
   
@@ -190,13 +354,13 @@ class App {
    * @param {string} address - endereco da celula do worksheet
    * @param {string} time - hora do ponto
    */
-  addTime(worksheet, address, time) {
+  _addTime(worksheet, address, time) {
     
     /* Adiciona tempo nas celulas */
   
-    let h = moment(time*1000).hours();          // *1000 correcao do epoch
-    let m = moment(time*1000).minutes();
-    let f = moment(time*1000).format('HH:mm');
+    let h = mm(time*1000).hours();                        // *1000 correcao do epoch
+    let m = mm(time*1000).minutes();
+    let f = mm(time*1000).format('HH:mm');
     // for (let i = 0; i < h; i++){
     //   m = m + 60; // por hora
     // }
@@ -284,11 +448,11 @@ class App {
 
       try {
         for (let i = 0; i < regs.length; i++) {
-          this.addDate(file.Sheets.Plan1, 'A'+(i+1), regs[i].date);
-          regs[i].reg.r1 != 0 ? this.addTime(file.Sheets.Plan1, 'B'+(i+1), regs[i].reg.r1) : ''
-          regs[i].reg.r2 != 0 ? this.addTime(file.Sheets.Plan1, 'C'+(i+1), regs[i].reg.r2) : ''
-          regs[i].reg.r3 != 0 ? this.addTime(file.Sheets.Plan1, 'D'+(i+1), regs[i].reg.r3) : ''
-          regs[i].reg.r4 != 0 ? this.addTime(file.Sheets.Plan1, 'E'+(i+1), regs[i].reg.r4) : ''
+          this._addDate(file.Sheets.Plan1, 'A'+(i+1), regs[i].date);
+          regs[i].reg.r1 != 0 ? this._addTime(file.Sheets.Plan1, 'B'+(i+1), regs[i].reg.r1) : ''
+          regs[i].reg.r2 != 0 ? this._addTime(file.Sheets.Plan1, 'C'+(i+1), regs[i].reg.r2) : ''
+          regs[i].reg.r3 != 0 ? this._addTime(file.Sheets.Plan1, 'D'+(i+1), regs[i].reg.r3) : ''
+          regs[i].reg.r4 != 0 ? this._addTime(file.Sheets.Plan1, 'E'+(i+1), regs[i].reg.r4) : ''
         }
         
         xlsx.writeFile(file, outFileName);
