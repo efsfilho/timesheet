@@ -8,14 +8,20 @@ const { existsFile, saveJSON, readJSON, checkDir } = require('./utils');
 
 const modelFileName = './src/file.xlsx'; // excel fonte para exportação 
 
+/** App */
 class App {
-
+  
+  /**
+   * App Constructor
+   * @param {object} config - locais dos diretorios
+   */
   constructor(config) {
     this.config = config;
     this.user = null;
     this.checkDirectories();
   }
 
+  /** Garante a existencia dos diretorios padrão  */
   checkDirectories() {
     try {
       checkDir(this.config.logLocal);                     // verifica local do log
@@ -23,10 +29,9 @@ class App {
       checkDir(this.config.userRegsLocal);                // verifica local dos registros do usuario
       checkDir(this.config.exportLocal);
     } catch (err) {
-      logger.error('Diretorios padrão não criados > '+err);
+      logger.error('Diretorios padrão não criados > checkDirectories: '+err);
     }
   }
-
   
   /**
    * Registra o usuario para outras operacoes
@@ -39,7 +44,6 @@ class App {
    */
   syncUser(userObj) {
     try {
-      logger.log('dsfdf');
       this.user = new User(userObj, this.config);         // verifica/add usuario e regs
     } catch (err) {
       this.user = null;
@@ -53,13 +57,10 @@ class App {
    * @param {number} newTime - epoch
    */
   addReg(typeReg, newTime) {
-
-    if (this.user == null) {
-      /* TODO log  */
-      reject('Não foi possivel...');
+    if (this.user == null) {                              // verifica usuario
+      logger.error('addReg Usuario não sincronizado > addReg');
     } else {
-
-      let userRegsFileName = this.config.userRegsLocal      // endereco com os registro do usuario
+      let userRegsFileName = this.config.userRegsLocal    // endereco com os registro do usuario
         +this.user.id+'.json';
     
       // TODO validacao do typeReg
@@ -67,49 +68,6 @@ class App {
       // TODO registrar log
       this.updateReg(userRegsFileName, typeReg, newTime* 1000);
     }
-
-  }
-
-  /**
-   * Retorna ponto do dia
-   * @param {string} dateTime - Dia selecionado (format YYYY-MM-DD).
-   */
-  getReg(dateTime) {
-    return new Promise((resolve, reject) => {
-
-      if (this.user == null) {
-        /* TODO log  */
-        reject('Não foi possivel....');
-      }
-
-      let userRegsFileName = this.config.userRegsLocal
-        +this.user.id+'.json';
-      
-      readJSON(userRegsFileName).then(data => {
-
-        let year  = moment(dateTime).year();
-        let month = moment(dateTime).month();
-        let day   = moment(dateTime).date()-1;            // array apartir do 0
-        
-        try {
-          for (let i = 0; i < data.length; i++) {
-            if(data[i].y == year){                        // data[i].y string
-              let reg = {
-                date: moment(dateTime).format('YYYY-MM-DD'),
-                r1: data[i].m[month].d[day].r.r1,
-                r2: data[i].m[month].d[day].r.r2,
-                r3: data[i].m[month].d[day].r.r3,
-                r4: data[i].m[month].d[day].r.r4
-              }
-              resolve(reg);
-            }
-          }
-        } catch(err) {
-          console.log(err);
-        }
-
-      }).catch(err => console.log(err))
-    });
   }
 
   /**
@@ -123,7 +81,6 @@ class App {
     readJSON(fileName).then(data => {
       
       try {
-
         let year  = moment(dateTime).year();
         let month = moment(dateTime).month();
         let day   = moment(dateTime).date()-1;            // array apartir de 0
@@ -148,9 +105,56 @@ class App {
         saveJSON(fileName, data); //.then(a => console.log(a));
         /* TODO retorno de sucesso */
       } catch (err) {
-        logger.error('Erro ao registrar ponto > '+err);
+        logger.error('Erro ao registrar ponto > updateReg: '+err);
       }
-    }).catch(err => logger.error('Erro ao ler ponto > '+err));
+    }).catch(err => logger.error('Erro ao ler ponto > updateReg: '+err));
+  }
+
+  /**
+   * Retorna ponto do dia
+   * @param {string} dateTime - Dia selecionado (format YYYY-MM-DD).
+   */
+  getReg(dateTime) {
+    return new Promise((resolve, reject) => {
+
+      if (this.user == null) {                            // verifica usuario
+        logger.error('getReg Ususario não sincronizado > getReg');
+        reject({
+          ok: false,
+          message: 'Usuário não sincronizado'
+        });
+      }
+
+      let userRegsFileName = this.config.userRegsLocal
+        +this.user.id+'.json';
+      
+      readJSON(userRegsFileName).then(data => {
+
+        let year  = moment(dateTime).year();
+        let month = moment(dateTime).month();
+        let day   = moment(dateTime).date()-1;            // array apartir do 0
+        
+        try {
+          for (let i = 0; i < data.length; i++) {
+            if(data[i].y == year){                        // data[i].y string
+              let reg = {
+                date: moment(dateTime).format('YYYY-MM-DD'),
+                r1: data[i].m[month].d[day].r.r1,
+                r2: data[i].m[month].d[day].r.r2,
+                r3: data[i].m[month].d[day].r.r3,
+                r4: data[i].m[month].d[day].r.r4
+              }
+              resolve({
+                ok: true,
+                result: reg
+              });
+            }
+          }
+        } catch(err) {
+          logger.error('Erro ao recuperar registros > getReg: '+err);
+        }
+      }).catch(err => logger.error('Erro ao ler registros > getReg: '+err))
+    });
   }
 
   /**
@@ -217,13 +221,11 @@ class App {
     worksheet['!ref'] = xlsx.utils.encode_range(range);
   }
 
-  /**
-   * Escreve o xlsx no disco
-   */
+  /**  Escreve o xlsx no disco */
   export() {
 
-    if(this.user == null) {
-      logger.info('Usuario não sincronizado');
+    if(this.user == null) {                               // verifica usuario
+      logger.info('Usuario não sincronizado > export');
       return;
     }
 
@@ -256,7 +258,7 @@ class App {
                   reg: objMonth.d[l].r
                 });
               } catch (err) {
-                throw err;
+                logger.error('Erro ao ler registros > export: '+err);
               }
             }
           }
@@ -264,7 +266,7 @@ class App {
         
         return fileRegs;
       } catch (err) {
-        logger.error('Erro ao processar exportação > '+err);
+        logger.error('Erro ao processar exportação > export: '+err);
       }
     }).then(regs => {
 
@@ -276,15 +278,13 @@ class App {
       if (existsFile(modelFileName)) {
         file = xlsx.readFile(modelFileName);        // excel base
       } else {
-        logger.error('xlsx base não encontrado.');
+        logger.error('xlsx base não encontrado > export');
         return;
       }
 
       try {
         for (let i = 0; i < regs.length; i++) {
-
           this.addDate(file.Sheets.Plan1, 'A'+(i+1), regs[i].date);
-
           regs[i].reg.r1 != 0 ? this.addTime(file.Sheets.Plan1, 'B'+(i+1), regs[i].reg.r1) : ''
           regs[i].reg.r2 != 0 ? this.addTime(file.Sheets.Plan1, 'C'+(i+1), regs[i].reg.r2) : ''
           regs[i].reg.r3 != 0 ? this.addTime(file.Sheets.Plan1, 'D'+(i+1), regs[i].reg.r3) : ''
@@ -295,11 +295,10 @@ class App {
         logger.info('Arquivo exportado por id: '+this.user.id+' - '+this.user.username);
 
       } catch (err) {
-        logger.error('Erro ao gerar arquivo de exportação > '+err);
+        logger.error('Erro ao gerar arquivo de exportação > export: '+err);
       }
-    }).catch(err => logger.error('Erro ao gerar exportação > '+err));
+    }).catch(err => logger.error('Erro ao gerar exportação > export: '+err));
   }
-  /* Export */
 }
 
 module.exports = App;
