@@ -223,13 +223,10 @@ class App {
     if (this.user == null) {                              // verifica usuario
       logger.error('addReg Usuario não sincronizado > addReg');
     } else {
-      let userRegsFileName = this.config.userRegsLocal    // endereco com os registro do usuario
-        +this.user.id+'.json';
-    
       // TODO validacao do typeReg
       // TODO validacao do newTime
       // TODO registrar log
-      this._updateReg(userRegsFileName, typeReg, newTime* 1000);
+      this._updateReg(typeReg, newTime* 1000);
     }
   }
 
@@ -239,7 +236,10 @@ class App {
    * @param {number} typeReg - tipo reg (1, 2, 3 ou 4)
    * @param {number} dateTime 
    */
-  _updateReg(fileName, typeReg, dateTime) {
+  _updateReg(typeReg, dateTime) {
+
+    let fileName = this.config.userRegsLocal      // endereco com os registro do usuario
+      +this.user.id+'.json';
 
     readJSON(fileName).then(data => {
       

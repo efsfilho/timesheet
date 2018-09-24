@@ -17,8 +17,9 @@ let u = { id: 245166578,
 
 let a = new App(config);
 
-a.syncUser(u);
+// a.syncUser(u);
 // a.export();
 // console.log(a);
 // a.addReg(u, 4, 1537291265)
-a.getReg(1537291265).then(res => console.log(res));
+// a.getReg(1537291265).then(res => console.log(res));
+const Bot = require('./src/bot');
