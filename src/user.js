@@ -29,7 +29,7 @@ class User {
   /** Verifica a existencia do usuario */
   _checkUser() {
     const user = this.user;
-    // Object.keys(user).length > 0 ?       // TODO verificar objeto
+    // Object.keys(user).length > 0 ?                     // TODO verificar objeto
 
     const usersFileName = this.userIndexLocal
       +this.userIndexFilneName;                           // arquivo com id dos usuarios
@@ -82,22 +82,22 @@ class User {
     let dayMonth = 0;
   
     for (let i = 0; i < 12; i++) {
-      dayMonth = mm({ month: i }).daysInMonth();            // quantidade de dias do mes
+      dayMonth = mm({ month: i }).daysInMonth();          // quantidade de dias do mes
   
       for (let l = 1; l <= dayMonth; l++) {
         days.push({
-          d: l,             // dia
-          r: {              // registros do dia
-            r1: 0,          // primeiro registro
-            r2: 0,          // segundo
+          d: l,                                           // dia
+          r: {                                            // registros do dia
+            r1: 0,                                        // primeiro registro
+            r2: 0,                                        // segundo
             r3: 0,
-            r4: 0           // ultimo
+            r4: 0                                         // ultimo
           }
         });
       }
   
       months.push({
-        m: mm({month: i}).month(), // mês i
+        m: mm({month: i}).month(),                        // mês i
         d: days
       });
   

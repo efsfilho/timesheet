@@ -58,8 +58,8 @@ class App {
   mountKeyboardCalendar(date) {
     return new Promise((resolve, reject) => {
 
-      let prev = mm(date).subtract(1, 'month').format();  // callback query para o mes anterior
-      let next = mm(date).add(1, 'month').format();       // callback query para o proximo mes
+      let prev = mm(date).subtract(1, 'month').format('YYYY-MM');  // callback query para o mes anterior
+      let next = mm(date).add(1, 'month').format('YYYY-MM');       // callback query para o proximo mes
 
       let keyBoard = [
         [                                                 // primeira linha do teclado
@@ -102,29 +102,39 @@ class App {
       this._getDayButtons(date.month()).then(res => {
         if (res.ok) {
           try {
-          
+
             let days = res.result;
             let weekCount = 6;
             let buttons = [];
             
             for (let i = 0; i < days.length; i++) {
       
-              let cbDate = mm({                               // callback query do dia
-                year: date.year(),
-                month: date.month(),
-                day: days[i]
-              });
-      
+              // let cbDate = mm({                               // callback query do dia
+              //   year: date.year(),
+              //   month: date.month(),
+              //   day: days[i]
+              // });
+              
               let button = {
                 text: ''+days[i],
-                // callback_data: ''+mm(date).day(i).format('DD/MM/YYYY')
-                callback_data: days[i] === '-' ? ''+days[i] : '+'+cbDate.format()
+                callback_data: ''
+                // callback_data: days[i] === '-' ? ''+days[i] : '+'+cbDate.format()
               };
+
+              if (days[i] === '-') {
+                button.callback_data = ''+days[i];
+              } else {
+                button.callback_data = '+'+mm({           // callback query do dia
+                  year: date.year(),
+                  month: date.month(),
+                  day: days[i]
+                }).format('YYYY-MM-DD');                  // padrao callbackQuery +YYYY-MM-DD
+              }
       
               buttons.push(button);
       
-              if (i >= weekCount) {                           // limita a 7 colunas
-                keyBoard.push(buttons);                       // adiciona terceira até a oitava linha
+              if (i >= weekCount) {                       // limita a 7 colunas
+                keyBoard.push(buttons);                   // adiciona terceira até a oitava linha
                 weekCount += 7;
                 buttons = [];
               }
@@ -147,7 +157,7 @@ class App {
   }
   
   /**
-   * Retorna array com os botoes dos dias 
+   * Retorna array com os botoes dos dias (titulos e callbacks)
    * @param {number} month - mes do calendario exibido
    */
   _getDayButtons(month) {                                 // retorna estrutura com os dias do mês
@@ -180,7 +190,7 @@ class App {
    * @param {string} date - moment date YYYY-MM-DD
    */
   mountKeyboardRegs(date) {
-    return new Promise((resolve, reject)=> {
+    return new Promise((resolve, reject) => {
       /* TODO validar as pesquisas */
       this._getReg(date).then(res => {
         if (res.ok) {
@@ -208,7 +218,7 @@ class App {
           reject({ ok: false });
         }
       }).catch(err => {
-        logger.error('Erro ao gerar teclado com registros > mountKeyboardRegs: '+err)
+        logger.error('Erro ao gerar teclado com registros > mountKeyboardRegs: '+JSON.stringify(err));
         reject({ ok: false });
       });    
     });
@@ -217,7 +227,7 @@ class App {
   /**
    * Adiciona registro de ponto
    * @param {number} typeReg - tipo de registro (1,2,3 ou 4)
-   * @param {number} newTime - epoch
+   * @param {number} newTime - unix timestamp
    */
   addReg(typeReg, newTime) {
     if (this.user == null) {                              // verifica usuario
@@ -231,14 +241,41 @@ class App {
   }
 
   /**
-   * Atualiza ponto
-   * @param {string} fileName - nome do arquivo dos registros
+   * Atualiza registro de ponto
+   * @param {string} date - data do ponto (YYYY-MM-DD)
    * @param {number} typeReg - tipo reg (1, 2, 3 ou 4)
-   * @param {number} dateTime 
+   * @param {string} strNewTime - novo ponto (hh:mm)
+   */
+  updateReg(date, typeReg, strNewTime) {
+    return new Promise((resolve, reject) => {
+      try {
+        if (isNaN(typeReg)) {
+          reject({ ok: false });
+        }
+        
+        const newTime = mm(date+' '+strNewTime);
+        if (newTime.isValid()) {
+          this._updateReg(typeReg, newTime.unix()*1000 );
+          /* TODO callback */
+          resolve({ ok: true });
+        } else {
+          reject({ ok: false });
+        }
+       
+      } catch (error) {
+        reject({ ok: false, result: err });
+      }
+    });
+  }
+
+  /**
+   * Atualiza ponto
+   * @param {number} typeReg - tipo reg (1, 2, 3 ou 4)
+   * @param {number} dateTime - unix timestamp
    */
   _updateReg(typeReg, dateTime) {
 
-    let fileName = this.config.userRegsLocal      // endereco com os registro do usuario
+    let fileName = this.config.userRegsLocal              // endereco com os registro do usuario
       +this.user.id+'.json';
 
     readJSON(fileName).then(data => {
@@ -265,8 +302,8 @@ class App {
           }
         }
 
-        saveJSON(fileName, data); //.then(a => console.log(a));
-        /* TODO retorno de sucesso */
+        saveJSON(fileName, data);
+        /* TODO retorno de sucesso? */
       } catch (err) {
         logger.error('Erro ao registrar ponto > updateReg: '+err);
       }
@@ -367,12 +404,12 @@ class App {
     // m = m/1440; // min 24 horas
   
     let cell = {
-      t:'s',    // format numero
+      t:'s',                                              // s = number format
       // v: m,
-      v: f      // format string
+      v: f
     };
     
-    worksheet[address] = cell;  // adiciona na celula
+    worksheet[address] = cell;                            // adiciona na celula
   
     let range = xlsx.utils.decode_range(worksheet['!ref']);
     let addr = xlsx.utils.decode_cell(address);
@@ -440,7 +477,7 @@ class App {
       let file = null;
 
       if (existsFile(modelFileName)) {
-        file = xlsx.readFile(modelFileName);        // excel base
+        file = xlsx.readFile(modelFileName);              // excel base
       } else {
         logger.error('xlsx base não encontrado > export');
         return;
