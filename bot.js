@@ -10,11 +10,14 @@ const key = '';
 const bot = new Ntba(key, { polling: true });
 const app = new App(config);
 
-const CMD_P1 = /p1/;                                      // /p1 comando para registro de comeco de jornada
-const CMD_P2 = /p2/;                                      // /p2 ' ' registro de almoco
-const CMD_P3 = /p3/;                                      // /p3 ' ' registro de volta de almoco
-const CMD_P4 = /p4/;                                      // /p4 ' ' registro de fim de jornada
-const CMD_EDIT = /\ba/;
+const CMD_START = /\/start/;
+const CMD_P1 = /^\/c1\b|^Come\ço\sde\sjornada\b/;         // /c1 comando para registro de comeco de jornada
+const CMD_P2 = /^\/c2\b|^Almo\ço\b/;                      // /c2 ' ' registro de almoco
+const CMD_P3 = /^\/c3\b|^Volta\sdo\salmo\ço\b/;           // /c3 ' ' registro de volta de almoco
+const CMD_P4 = /^\/c4\b|^Fim\sde\sjornada\b/;             // /c4 ' ' registro de fim de jornada
+const CMD_SHORTCUT = /\/atalho/;                          // /atalho
+const CMD_EDIT = /\ba\b/;
+
 
 /** Bot */
 class Bot {
@@ -23,15 +26,21 @@ class Bot {
     this._mainListener();                                 // inicia listener principal 
     this._startListeners();                               // inicia listeners de comandos
     this._errorHandlingListeners();                       // inicia listeners de erros
+    this._shortcutMode = false;                           // flag de modo atalho
   }
 
-  /** Listener que identifica o usuario */
+  /** Listeners principais */
   _mainListener() {                                       // _mainListener nao e parado pelo _stopListeners
     bot.on('message', msg => {
       if (app.user == null) {
         let user = this._getUser(msg);
         app.syncUser(user); /* TODO Teste com mais de um usuario*/
       }
+    });
+
+    bot.onText(CMD_START, msg => {                        // /start
+      const chatId = msg.chat.id;
+      bot.sendMessage(chatId, 'Bem vindo');
     });
   }
 
@@ -65,10 +74,36 @@ class Bot {
 
   /** Carrega listeners */
   _startListeners() {
+    /* TODO callbacks */
     bot.onText(CMD_P1, msg => app.addReg(1, msg.date));
     bot.onText(CMD_P2, msg => app.addReg(2, msg.date));
     bot.onText(CMD_P3, msg => app.addReg(3, msg.date));
     bot.onText(CMD_P4, msg => app.addReg(4, msg.date));
+
+    bot.onText(CMD_SHORTCUT, msg => {                     // modo atalho/comando
+      const chatId = msg.chat.id;
+      if (!this._shortcutMode) {
+        this._shortcutMode = true;
+        bot.sendMessage(chatId, 'Modo atalho', {
+          reply_markup: {
+            keyboard: [
+              ['Começo de jornada'],
+              ['Almoço'],
+              ['Volta do almoço'],
+              ['Fim de jornada']
+            ],
+            resize_keyboard: true,
+          }
+        });
+      } else {
+        this._shortcutMode = false;
+        bot.sendMessage(chatId, 'Modo comando',{
+          reply_markup: {
+            remove_keyboard: true,        
+          }
+        });
+      }
+    });
 
     bot.onText(CMD_EDIT, msg => {                         // teclado calendario
       const chatId = msg.chat.id;
@@ -212,6 +247,7 @@ class Bot {
     bot.removeTextListener(CMD_P2);
     bot.removeTextListener(CMD_P3);
     bot.removeTextListener(CMD_P4);
+    bot.removeTextListener(CMD_SHORTCUT);
     bot.removeTextListener(CMD_EDIT);
     bot.removeListener('callback_query');
   }
