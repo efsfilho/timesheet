@@ -1,9 +1,9 @@
 process.env["NTBA_FIX_319"] = 1;
 
 const Ntba = require('node-telegram-bot-api');
-const config = require('../config/index');
-const logger = require('./logger');
-const App = require('./app');
+const config = require('./config/index');
+const logger = require('./src/logger');
+const App = require('./src/app');
 const mm = require('moment');
 
 const key = '';
@@ -29,7 +29,7 @@ class Bot {
   _mainListener() {                                       // _mainListener nao e parado pelo _stopListeners
     bot.on('message', msg => {
       if (app.user == null) {
-        let user = _getUser(msg);
+        let user = this._getUser(msg);
         app.syncUser(user); /* TODO Teste com mais de um usuario*/
       }
     });
@@ -225,4 +225,4 @@ class Bot {
   }
 }
 
-module.exports = new Bot();
+new Bot();

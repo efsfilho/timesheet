@@ -8,7 +8,6 @@ const config = require('../config/index');
 const logFormat = info => {
   let level = info.level.toUpperCase();
   level = level == 'INFO' ? level+' ' : level;            //(ERROR|INFO) mantem o level com 5 caracteres
-  console.log(info);
   
   /* TODO info.data adicionado para parse de alguns objetos */
   // if (typeof(info.data) === 'undefined') {
