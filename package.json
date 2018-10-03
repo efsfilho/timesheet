@@ -22,5 +22,8 @@
     "node-telegram-bot-api": "^0.30.0",
     "winston": "^3.1.0",
     "xlsx": "^0.13.3"
+  },
+  "nodemonConfig": {
+    "ignore": ["data/*"]
   }
 }

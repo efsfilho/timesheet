@@ -230,14 +230,27 @@ class App {
    * @param {number} newTime - unix timestamp
    */
   addReg(typeReg, newTime) {
-    if (this.user == null) {                              // verifica usuario
-      logger.error('addReg Usuario não sincronizado > addReg');
-    } else {
-      // TODO validacao do typeReg
-      // TODO validacao do newTime
-      // TODO registrar log
-      this._updateReg(typeReg, newTime* 1000);
-    }
+    return new Promise((resolve, reject) => {
+      if (this.user == null) {                              // verifica usuario
+        logger.error('addReg Usuario não sincronizado > addReg');
+        reject({ok: false});
+      } else {
+        // TODO validacao do typeReg
+        // TODO validacao do newTime
+        this._updateReg(typeReg, newTime* 1000).then(res => {
+          if (res.ok) {
+            resolve({
+              ok: true,
+              result: res.result
+            });
+          } else {
+            reject({ ok: false });
+          }
+        }).catch(err => {
+          reject({ ok: false });
+        });
+      }
+    });
   }
 
   /**
@@ -255,14 +268,20 @@ class App {
         
         const newTime = mm(date+' '+strNewTime);
         if (newTime.isValid()) {
-          this._updateReg(typeReg, newTime.unix()*1000 );
-          /* TODO callback */
-          resolve({ ok: true });
+          this._updateReg(typeReg, newTime.unix()*1000 ).then(res => {
+            if (res.ok) {
+              resolve({ ok: true });
+            } else {
+              reject({ ok: false });
+            }
+          }).catch(err => {
+            // TODO log?
+            reject({ ok: false });
+          });
         } else {
           reject({ ok: false });
         }
-       
-      } catch (error) {
+      } catch (err) {
         reject({ ok: false, result: err });
       }
     });
@@ -278,36 +297,54 @@ class App {
     let fileName = this.config.userRegsLocal              // endereco com os registro do usuario
       +this.user.id+'.json';
 
-    readJSON(fileName).then(data => {
-      
-      try {
-        let year  = mm(dateTime).year();
-        let month = mm(dateTime).month();
-        let day   = mm(dateTime).date()-1;                // array apartir de 0
+    return new Promise((resolve, reject) => {
+      readJSON(fileName).then(data => {
 
-        for (let i = 0; i < data.length; i++) {           // conjunto de registros por ano
-          if(data[i].y == year){                          // registro do ano
-            if (typeReg == 1) {                           
-              data[i].m[month].d[day].r.r1 = dateTime;    // comeco jornada 
-            }
-            if (typeReg == 2) {
-              data[i].m[month].d[day].r.r2 = dateTime;    // comeco almoco
-            }
-            if (typeReg == 3) {
-              data[i].m[month].d[day].r.r3 = dateTime;    // fim almoco 
-            }
-            if (typeReg == 4) {
-              data[i].m[month].d[day].r.r4 = dateTime;    // fim jornada
+        try {
+          let year  = mm(dateTime).year();
+          let month = mm(dateTime).month();
+          let day   = mm(dateTime).date()-1;                // array apartir de 0
+  
+          for (let i = 0; i < data.length; i++) {           // conjunto de registros por ano
+            if(data[i].y == year){                          // registro do ano
+              if (typeReg == 1) {                           
+                data[i].m[month].d[day].r.r1 = dateTime;    // comeco jornada 
+              }
+              if (typeReg == 2) {
+                data[i].m[month].d[day].r.r2 = dateTime;    // comeco almoco
+              }
+              if (typeReg == 3) {
+                data[i].m[month].d[day].r.r3 = dateTime;    // fim almoco 
+              }
+              if (typeReg == 4) {
+                data[i].m[month].d[day].r.r4 = dateTime;    // fim jornada
+              }
             }
           }
-        }
+  
+          saveJSON(fileName, data).then(res => {
+            if (res.ok) {
+              resolve({
+                ok: true,
+                result: mm(dateTime).format()             // retorno do ponto atualizado
+              });
+            } else {
+              reject({ ok: false });
+            }
+          }).catch(err => {
+            logger.error('Erro ao salvar registro de ponto > updateReg: '+err);
+            reject({ ok: false });
+          });
 
-        saveJSON(fileName, data);
-        /* TODO retorno de sucesso? */
-      } catch (err) {
-        logger.error('Erro ao registrar ponto > updateReg: '+err);
-      }
-    }).catch(err => logger.error('Erro ao ler ponto > updateReg: '+err));
+        } catch (err) {
+          logger.error('Erro ao registrar ponto > updateReg: '+err);
+          reject({ ok: false });
+        }
+      }).catch(err => {
+        logger.error('Erro ao ler ponto > updateReg: '+err);
+        reject({ ok: false });
+      });
+    });
   }
 
   /**

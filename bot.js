@@ -16,8 +16,22 @@ const CMD_P2 = /^\/c2\b|^Almo\ço\b/;                      // /c2 ' ' registro d
 const CMD_P3 = /^\/c3\b|^Volta\sdo\salmo\ço\b/;           // /c3 ' ' registro de volta de almoco
 const CMD_P4 = /^\/c4\b|^Fim\sde\sjornada\b/;             // /c4 ' ' registro de fim de jornada
 const CMD_SHORTCUT = /\/atalho/;                          // /atalho
-const CMD_EDIT = /\ba\b/;
+const CMD_EDIT = /\/editar\b|^Editar\spontos\b/;
 
+bot.onText(/q/, msg => {
+  try {
+    /(?<=\.)\d/.exec('sdfsdf')
+  } catch (e) {
+    // console.log(typeof({e: 33}));
+    // console.log(typeof(e));
+  }
+  // console.log(msg);
+  bot.sendMessage(msg.chat.id, 'TesteTtecasl');
+});
+
+bot.onText(/eco/, msg => {
+  bot.sendMessage(msg.chat.id, 'eco');
+});
 
 /** Bot */
 class Bot {
@@ -74,11 +88,66 @@ class Bot {
 
   /** Carrega listeners */
   _startListeners() {
-    /* TODO callbacks */
-    bot.onText(CMD_P1, msg => app.addReg(1, msg.date));
-    bot.onText(CMD_P2, msg => app.addReg(2, msg.date));
-    bot.onText(CMD_P3, msg => app.addReg(3, msg.date));
-    bot.onText(CMD_P4, msg => app.addReg(4, msg.date));
+
+    bot.onText(CMD_P1, msg => {
+      const chatId = msg.chat.id;
+      app.addReg(1, msg.date).then(res => {
+        if (res.ok) {
+          let replyMsg = 'Começo de jornada: '+mm(res.result).format('HH:mm');
+          bot.sendMessage(chatId, replyMsg);
+        } else {
+          this._defaultMessageError(chatId);
+        }
+      }).catch(err => {
+        logger.error('Erro ao registrar ponto > _startListeners: '+err);
+        this._defaultMessageError(chatId);
+      })
+    });
+
+    bot.onText(CMD_P2, msg => {
+      const chatId = msg.chat.id;
+      app.addReg(2, msg.date).then(res => {
+        if (res.ok) {
+          let replyMsg = 'Almoço: '+mm(res.result).format('HH:mm');
+          bot.sendMessage(chatId, replyMsg);
+        } else {
+          this._defaultMessageError(chatId);
+        }
+      }).catch(err => {
+        logger.error('Erro ao registrar ponto > _startListeners: '+err);
+        this._defaultMessageError(chatId);
+      })
+    });
+
+    bot.onText(CMD_P3, msg => {
+      const chatId = msg.chat.id;
+      app.addReg(3, msg.date).then(res => {
+        if (res.ok) {
+          let replyMsg = 'Volta do Almoço: '+mm(res.result).format('HH:mm');
+          bot.sendMessage(chatId, replyMsg);
+        } else {
+          this._defaultMessageError(chatId);
+        }
+      }).catch(err => {
+        logger.error('Erro ao registrar ponto > _startListeners: '+err);
+        this._defaultMessageError(chatId);
+      })
+    });
+    
+    bot.onText(CMD_P4, msg => {
+      const chatId = msg.chat.id;
+      app.addReg(4, msg.date).then(res => {
+        if (res.ok) {
+          let replyMsg = 'Fim de Jornada: '+mm(res.result).format('HH:mm');
+          bot.sendMessage(chatId, replyMsg);
+        } else {
+          this._defaultMessageError(chatId);
+        }
+      }).catch(err => {
+        logger.error('Erro ao registrar ponto > _startListeners: '+err);
+        this._defaultMessageError(chatId);
+      })
+    });
 
     bot.onText(CMD_SHORTCUT, msg => {                     // modo atalho/comando
       const chatId = msg.chat.id;
@@ -90,7 +159,8 @@ class Bot {
               ['Começo de jornada'],
               ['Almoço'],
               ['Volta do almoço'],
-              ['Fim de jornada']
+              ['Fim de jornada'],
+              ['Editar pontos']
             ],
             resize_keyboard: true,
           }
@@ -220,9 +290,9 @@ class Bot {
       const typeReg = /^\d/.exec(action)[0];
 
       /* TODO fazer uma validacao decente */
-      app.updateReg(date, typeReg, msg.text).then(res => {
+      app.updateReg(date, typeReg, msg.text).then(res => {        
         if (res.ok) {
-          /* TODO callback */
+          /* TODO callback caso nao ocorra a alteracao*/
           bot.sendMessage(opts.chat_id, 'Ponto alterado');
         } else {
           this._defaultMessageError(opts.chat_id);
