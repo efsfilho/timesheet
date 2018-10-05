@@ -265,7 +265,7 @@ class App {
         if (isNaN(typeReg)) {
           reject({ ok: false });
         }
-        
+
         const newTime = mm(date+' '+strNewTime);
         if (newTime.isValid()) {
           this._updateReg(typeReg, newTime.unix()*1000 ).then(res => {

@@ -5,7 +5,7 @@ const config = require('./config/index');
 const logger = require('./src/logger');
 const App = require('./src/app');
 const mm = require('moment');
-
+mm.locale('pt-BR');
 const key = '';
 const bot = new Ntba(key, { polling: true });
 const app = new App(config);
@@ -20,13 +20,17 @@ const CMD_EDIT = /\/editar\b|^Editar\spontos\b/;
 
 bot.onText(/q/, msg => {
   try {
-    /(?<=\.)\d/.exec('sdfsdf')
+    let a = msg.text.replace(':', '');
+
+    if (/[0-1][0-9][0-5][0-9]|[2][0-3][0-5][0-9]/.exec(a) !== null) {
+      bot.sendMessage(msg.chat.id, a+' OKK');
+    } else {
+      bot.sendMessage(msg.chat.id, 'TesteTtecasl');
+    }
   } catch (e) {
     // console.log(typeof({e: 33}));
     // console.log(typeof(e));
   }
-  // console.log(msg);
-  bot.sendMessage(msg.chat.id, 'TesteTtecasl');
 });
 
 bot.onText(/eco/, msg => {
@@ -138,7 +142,7 @@ class Bot {
       const chatId = msg.chat.id;
       app.addReg(4, msg.date).then(res => {
         if (res.ok) {
-          let replyMsg = 'Fim de Jornada: '+mm(res.result).format('HH:mm');
+          let replyMsg = 'Fim de Jornada '+mm(res.result).format('HH:mm');
           bot.sendMessage(chatId, replyMsg);
         } else {
           this._defaultMessageError(chatId);
@@ -263,6 +267,7 @@ class Bot {
     /* TODO fazer uma validacao decente */
     return app.mountKeyboardRegs(strDate).then(res => {
       if (res.ok) {
+        bot.editMessageText(mm(strDate).format('LL'), opts);
         bot.editMessageReplyMarkup(res.result, opts);
       } else {
         logger.info('Falha no calendario > _callbackQueryKeyBoardRegs');
@@ -282,18 +287,27 @@ class Bot {
    * @param {number} opts.message_id - id da mensagem do teclado 
    */
   _callbackQueryUpdateReg(cbQueryData, opts) {
-    bot.editMessageText('Digite o novo ponto', opts);
+
+    const date = mm(cbQueryData.replace(/\.\w/, ''));
+    const action = cbQueryData.replace(/^\./, '');
+    const typeReg = /^\d/.exec(action)[0];
+    const typeMsg = new Array(
+      '',                                                 // correcao array a partir do idx 1
+      '(Começo de jornada)',
+      '(Almoço)',
+      '(Volta do Almoço)',
+      '(Fim de Jornada)'
+    );
+
+    bot.editMessageText('Digite o novo ponto '+typeMsg[typeReg], opts);
     this._stopListeners();                                // desativa os listeners
     bot.once('message', msg => {                          // listener para pegar o novo ponto digitado 
-      const date = mm(cbQueryData.replace(/\.\w/, '')).format('YYYY-MM-DD');
-      const action = cbQueryData.replace(/^\./, '');
-      const typeReg = /^\d/.exec(action)[0];
 
       /* TODO fazer uma validacao decente */
-      app.updateReg(date, typeReg, msg.text).then(res => {        
+      app.updateReg(date.format('YYYY-MM-DD'), typeReg, msg.text).then(res => {
         if (res.ok) {
           /* TODO callback caso nao ocorra a alteracao*/
-          bot.sendMessage(opts.chat_id, 'Ponto alterado');
+          bot.sendMessage(opts.chat_id, 'Ponto alterado '+typeMsg[typeReg]+'\n'+date.format('LL'));
         } else {
           this._defaultMessageError(opts.chat_id);
         }
