@@ -23,7 +23,7 @@ bot.onText(/q/, msg => {
     let a = msg.text.replace(':', '');
 
     if (/[0-1][0-9][0-5][0-9]|[2][0-3][0-5][0-9]/.exec(a) !== null) {
-      bot.sendMessage(msg.chat.id, a+' OKK');
+      bot.sendMessage(msg.chat.id, a.slice(1,3)+':'+a.slice(3,6));
     } else {
       bot.sendMessage(msg.chat.id, 'TesteTtecasl');
     }
@@ -302,21 +302,31 @@ class Bot {
     bot.editMessageText('Digite o novo ponto '+typeMsg[typeReg], opts);
     this._stopListeners();                                // desativa os listeners
     bot.once('message', msg => {                          // listener para pegar o novo ponto digitado 
-
+      let strNewTime = msg.text;
       /* TODO fazer uma validacao decente */
-      app.updateReg(date.format('YYYY-MM-DD'), typeReg, msg.text).then(res => {
-        if (res.ok) {
-          /* TODO callback caso nao ocorra a alteracao*/
-          bot.sendMessage(opts.chat_id, 'Ponto alterado '+typeMsg[typeReg]+'\n'+date.format('LL'));
-        } else {
+      if (/^\d\d\d\d\b/.exec(msg.text) !== null) {
+        strNewTime = msg.text.slice(0,2)+':'+msg.text.slice(2,4);
+      }
+
+      if (/[0-1][0-9]\:?[0-5][0-9]|[2][0-3]\:?[0-5][0-9]/.exec(strNewTime) !== null) {
+        
+        app.updateReg(date.format('YYYY-MM-DD'), typeReg, strNewTime).then(res => {
+          if (res.ok) {
+            /* TODO callback caso nao ocorra a alteracao*/
+            bot.sendMessage(opts.chat_id, 'Ponto alterado '+typeMsg[typeReg]+'\n'+date.format('LL'));
+          } else {
+            this._defaultMessageError(opts.chat_id);
+          }
+          this._startListeners();                           // reativa os listesteners apos resposta do usuario
+        }).catch(err => {
+          logger.error('Erro ao atualizar registro de ponto > _callbackQueryUpdateReg: '+err);
+          this._startListeners();                           // reativa os listesteners apos resposta do usuario
           this._defaultMessageError(opts.chat_id);
-        }
-        this._startListeners();                           // reativa os listesteners apos resposta do usuario
-      }).catch(err => {
-        logger.error('Erro ao atualizar registro de ponto > _callbackQueryUpdateReg: '+err);
-        this._startListeners();                           // reativa os listesteners apos resposta do usuario
+        });
+      } else {
+        this._startListeners();   
         this._defaultMessageError(opts.chat_id);
-      });
+      }
     })
   }
 
