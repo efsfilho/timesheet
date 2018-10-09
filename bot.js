@@ -1,4 +1,5 @@
-process.env["NTBA_FIX_319"] = 1;
+process.env['NTBA_FIX_319'] = 1; // Deprecated issue https://github.com/yagop/node-telegram-bot-api/issues/319
+process.env['NTBA_FIX_350'] = 1; // Deprecated issue https://github.com/yagop/node-telegram-bot-api/blob/master/doc/usage.md#sending-files
 
 const Ntba = require('node-telegram-bot-api');
 const config = require('./config/index');
@@ -17,6 +18,7 @@ const CMD_P3 = /^\/c3\b|^Volta\sdo\salmo\ço\b/;           // /c3 ' ' registro d
 const CMD_P4 = /^\/c4\b|^Fim\sde\sjornada\b/;             // /c4 ' ' registro de fim de jornada
 const CMD_SHORTCUT = /\/atalho/;                          // /atalho
 const CMD_EDIT = /\/editar\b|^Editar\spontos\b/;
+const CMD_EXPT = /^exp\b/;                                // comando para exportar excel
 
 bot.onText(/q/, msg => {
   try {
@@ -221,6 +223,26 @@ class Bot {
         this._callbackQueryUpdateReg(action, opts);       // botao registro do ponto
       }
     });
+
+    bot.onText(CMD_EXPT, msg => {                         // excel export
+      const chatId = msg.chat.id;
+      app.export().then(res => {
+        if (res.ok) {
+          const fileName = mm(msg.date*1000).format('DDMMYYYYHHmmss')+'.xlsx';
+          bot.sendDocument(chatId, res.result, {}, { 
+            filename: fileName,
+            contentType: 'application/octet-stream'
+            /* https://github.com/yagop/node-telegram-bot-api/blob/master/doc/usage.md#sending-files */
+          });
+        } else {
+          logger.error('Erro ao exportar arquivo > _startListeners: '+err);
+          this._defaultMessageError(chatId);
+        }
+      }).catch(err => {
+        logger.error('Erro ao exportar arquivo > _startListeners: '+err);
+        this._defaultMessageError(chatId);
+      })
+    });
   }
 
   /** 
@@ -344,6 +366,7 @@ class Bot {
     bot.removeTextListener(CMD_SHORTCUT);
     bot.removeTextListener(CMD_EDIT);
     bot.removeListener('callback_query');
+    bot.removeTextListener(CMD_EXPT);
   }
 
   /** Error listeners */

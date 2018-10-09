@@ -4,7 +4,7 @@ const xlsx = require('xlsx');
 const User = require('./user');
 const logger = require('./logger');
 
-const { existsFile, saveJSON, readJSON, checkDir } = require('./utils');
+const { existsFile, saveJSON, readJSON, checkDir, readFile } = require('./utils');
 
 const modelFileName = './src/file.xlsx'; // excel fonte para exportação 
 
@@ -459,27 +459,17 @@ class App {
     worksheet['!ref'] = xlsx.utils.encode_range(range);
   }
 
-  /**  Escreve o xlsx no disco */
-  export() {
-
-    if(this.user == null) {                               // verifica usuario
-      logger.info('Usuario não sincronizado > export');
-      return;
-    }
-
-    const baseFileName = this.config.userRegsLocal
-        +this.user.id+'.json';                            // registros do usuario
-
-    const outFileName = this.config.exportLocal
-        +this.user.id+'.xlsx';                            // arquivo a ser exportado
-
-    readJSON(baseFileName).then(data => {
+  /** Converte dados dos pontos para um objeto 
+   * @param {Array} data - dados lidos do arquivo de pontos
+  */
+  _processFileToExport(data) {
+    return new Promise((resolve, reject) => {
 
       let obj = data;
       let year = 0;
       let month = 0;
       let day = 0;
-      let fileRegs = [];
+      let regsObj = [];
 
       try {
         for (let i = 0; i < obj.length; i++) {
@@ -491,51 +481,104 @@ class App {
             for (let l = 0; l < objMonth.d.length; l++) {
               day = l+1;
               try {
-                fileRegs.push({
+                regsObj.push({
                   date: day+'/'+month+'/'+year,
                   reg: objMonth.d[l].r
                 });
               } catch (err) {
-                logger.error('Erro ao ler registros > export: '+err);
+                logger.error('Erro ao ler registros > _processFileToExport: '+err);
+                reject({ ok: false });
               }
             }
           }
         }
         
-        return fileRegs;
+        resolve({
+          ok: true,
+          result: regsObj
+        });
       } catch (err) {
-        logger.error('Erro ao processar exportação > export: '+err);
+        logger.error('Erro ao processar exportação > _processFileToExport: '+err);
+        reject({ ok: false });
       }
-    }).then(regs => {
+    });
+  }
 
-      /* TODO criar excel em runtime */
-      // file = xlsx.utils.book_new();
+  /**  Escreve o xlsx no disco */
+  export() {
+    return new Promise((resolve, reject) => {
 
-      let file = null;
-
-      if (existsFile(modelFileName)) {
-        file = xlsx.readFile(modelFileName);              // excel base
-      } else {
-        logger.error('xlsx base não encontrado > export');
-        return;
+      if(this.user == null) {                             // verifica usuario
+        logger.info('Usuario não sincronizado > export');
+        reject({ ok: false });
       }
 
-      try {
-        for (let i = 0; i < regs.length; i++) {
-          this._addDate(file.Sheets.Plan1, 'A'+(i+1), regs[i].date);
-          regs[i].reg.r1 != 0 ? this._addTime(file.Sheets.Plan1, 'B'+(i+1), regs[i].reg.r1) : ''
-          regs[i].reg.r2 != 0 ? this._addTime(file.Sheets.Plan1, 'C'+(i+1), regs[i].reg.r2) : ''
-          regs[i].reg.r3 != 0 ? this._addTime(file.Sheets.Plan1, 'D'+(i+1), regs[i].reg.r3) : ''
-          regs[i].reg.r4 != 0 ? this._addTime(file.Sheets.Plan1, 'E'+(i+1), regs[i].reg.r4) : ''
-        }
-        
-        xlsx.writeFile(file, outFileName);
-        logger.info('Arquivo exportado por id: '+this.user.id+' - '+this.user.username);
+      const baseFileName = this.config.userRegsLocal
+          +this.user.id+'.json';                          // registros do usuario
 
-      } catch (err) {
-        logger.error('Erro ao gerar arquivo de exportação > export: '+err);
-      }
-    }).catch(err => logger.error('Erro ao gerar exportação > export: '+err));
+      const outFileName = this.config.exportLocal
+          +this.user.id+'.xlsx';                          // arquivo a ser exportado
+
+      readJSON(baseFileName).then(data => {
+        this._processFileToExport(data).then(res => {     // processa arquivo json
+          /* TODO criar excel em runtime */
+          // file = xlsx.utils.book_new();
+          if (res.ok) {
+
+            const regs = res.result;
+            let file = null;
+            
+            if (existsFile(modelFileName)) {
+              file = xlsx.readFile(modelFileName);        // excel base
+            } else {
+              logger.error('xlsx base não encontrado > export');
+              reject({ ok: false });
+            }
+
+            try {
+              for (let i = 0; i < regs.length; i++) {
+                this._addDate(file.Sheets.Plan1, 'A'+(i+1), regs[i].date);
+                regs[i].reg.r1 != 0 ? this._addTime(file.Sheets.Plan1, 'B'+(i+1), regs[i].reg.r1) : ''
+                regs[i].reg.r2 != 0 ? this._addTime(file.Sheets.Plan1, 'C'+(i+1), regs[i].reg.r2) : ''
+                regs[i].reg.r3 != 0 ? this._addTime(file.Sheets.Plan1, 'D'+(i+1), regs[i].reg.r3) : ''
+                regs[i].reg.r4 != 0 ? this._addTime(file.Sheets.Plan1, 'E'+(i+1), regs[i].reg.r4) : ''
+              }
+
+              // xlsx.writeFile(file, outFileName);
+              xlsx.writeFileAsync(outFileName, file, () => {
+                readFile(outFileName).then(res => {
+                  if (res.ok) {
+                    resolve({
+                      ok: true,
+                      result: res.result
+                    });
+                  } else {
+                    logger.error('Erro ao ler arquivo de exportação > export: '+err);
+                    reject({ ok: false });
+                  }
+                }).catch(err => {
+                  logger.error('Erro ao ler arquivo de exportação > export: '+err);
+                  reject({ ok: false });
+                });
+              });
+
+            } catch (err) {
+              logger.error('Erro ao gerar arquivo de exportação > export: '+err);
+              reject({ ok: false });
+            }
+          } else {
+            logger.error('ok false > export: '+err);
+            reject({ ok: false });
+          }
+        }).catch(err => {
+          logger.error('Erro ao processar exportação > export: '+err);
+          reject({ ok: false });
+        });
+      }).catch(err => {
+        logger.error('Erro ao gerar exportação > export: '+err)
+        reject({ ok: false });
+      });
+    });
   }
 }
 
