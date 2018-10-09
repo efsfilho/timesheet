@@ -29,6 +29,7 @@ class Utils {
         if (err) {
           reject(err);
         } else {
+          /* TODO resolve/reject fora do padrao */
           data.length > 0 ? resolve(JSON.parse(data)) : reject(new Error('JSON vazio'));
         }
       });
@@ -41,6 +42,25 @@ class Utils {
     }
   }
   
+  static readFile(fileName) {
+    return new Promise((resolve, reject) => {
+      if (Utils.existsFile(fileName)){
+        fs.readFile(fileName, (err, data) => {
+          if (err) {
+            reject({ ok: false });
+          } else {
+            resolve({
+              ok: true,
+              result: data
+            })
+          }
+        });
+      } else {
+        reject({ ok: false });
+      }
+    });
+  }
+
 }
 
 module.exports = Utils;
