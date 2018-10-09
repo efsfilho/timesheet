@@ -34,8 +34,17 @@ const logger = winston.createLogger({
   ),
   transports: [
     new winston.transports.Console(),
-    new winston.transports.File({ filename: config.logLocal+'/error.log', level: 'error' }),
-    new winston.transports.File({ filename: config.logLocal+'/log.log' }),
+    new winston.transports.File({
+      filename: config.logLocal+'/error.log',
+      level: 'error',
+      maxsize:  5000000, // bytes
+      maxFiles: 5
+    }),
+    new winston.transports.File({
+      filename: config.logLocal+'/log.log',
+      maxsize:  5000000, // bytes
+      maxFiles: 5
+    }),
   ]
 });
 
