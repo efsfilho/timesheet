@@ -432,9 +432,9 @@ class App {
     
     /* Adiciona tempo nas celulas */
   
-    let h = mm(time*1000).hours();                        // *1000 correcao do epoch
-    let m = mm(time*1000).minutes();
-    let f = mm(time*1000).format('HH:mm');
+    let h = mm(time).hours();
+    let m = mm(time).minutes();
+    let f = mm(time).format('HH:mm');
     // for (let i = 0; i < h; i++){
     //   m = m + 60; // por hora
     // }
@@ -477,7 +477,7 @@ class App {
           year = objYear.y;
           for(let j = 0; j < objYear.m.length; j++){
             let objMonth = objYear.m[j];
-            month = objMonth.m;
+            month = objMonth.m+1;
             for (let l = 0; l < objMonth.d.length; l++) {
               day = l+1;
               try {
