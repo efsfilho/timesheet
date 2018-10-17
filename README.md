@@ -13,11 +13,11 @@ npm install
 
 ## Configuração 
 A chave do telegram gerada através do [@botfather](https://telegram.me/BotFather) vai no [bot.js](./bot.js) 
-```
+```js
 const key = 'chave_telegram';
 ```
 no [/config/index.js](./config/index.js) estão os locais onde serão salvos registros(que são salvos em um json por enquanto) e os logs
-```
+```js
 let config = {
   logLocal: './log/', 			// local dos logs
   userIndexLocal: './data/', 		// local do arquivo com os usuarios
