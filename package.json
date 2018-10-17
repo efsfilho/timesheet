@@ -1,5 +1,5 @@
 {
-  "name": "timesheetbot",
+  "name": "timesheet",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -9,14 +9,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/efsfilho/timesheetbot.git"
+    "url": "git+https://github.com/efsfilho/timesheet.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/efsfilho/timesheetbot/issues"
+    "url": "https://github.com/efsfilho/timesheet/issues"
   },
-  "homepage": "https://github.com/efsfilho/timesheetbot#readme",
+  "homepage": "https://github.com/efsfilho/timesheet#readme",
   "dependencies": {
     "moment": "^2.22.2",
     "node-telegram-bot-api": "^0.30.0",

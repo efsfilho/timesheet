@@ -7,7 +7,8 @@ const logger = require('./src/logger');
 const App = require('./src/app');
 const mm = require('moment');
 mm.locale('pt-BR');
-const key = process.env.TELEGRAM_API_KEY;
+
+const key = '';
 const bot = new Ntba(key, { polling: true });
 const app = new App(config);
 
