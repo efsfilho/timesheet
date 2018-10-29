@@ -18,11 +18,11 @@ class App {
   constructor(config) {
     this.config = config;
     this.user = null;
-    this.checkDirectories();
+    this._checkDirectories();
   }
 
   /** Garante a existencia dos diretorios padrão  */
-  checkDirectories() {
+  _checkDirectories() {
     try {
       checkDir(this.config.logLocal);                     // verifica local do log
       checkDir(this.config.userIndexLocal);               // verifica local do arquivo do usuario
