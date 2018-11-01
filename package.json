@@ -24,6 +24,8 @@
     "xlsx": "^0.13.3"
   },
   "nodemonConfig": {
-    "ignore": ["data/*"]
+    "ignore": [
+      "data/*"
+    ]
   }
 }

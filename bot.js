@@ -9,7 +9,7 @@ const mm = require('moment');
 mm.locale('pt-BR');
 
 const key = '';
-const bot = new Ntba(key, { polling: true });
+const bot = new Ntba(key, { polling: { interval: 30000 } });
 const app = new App(config);
 
 const CMD_START = /\/start/;
@@ -21,22 +21,9 @@ const CMD_SHORTCUT = /\/atalho/;                          // /atalho
 const CMD_EDIT = /\/editar\b|^Editar\spontos\b/;
 const CMD_EXPT = /^exp\b/;                                // comando para exportar excel
 
-bot.onText(/q/, msg => {
-  try {
-    let a = msg.text.replace(':', '');
-
-    if (/[0-1][0-9][0-5][0-9]|[2][0-3][0-5][0-9]/.exec(a) !== null) {
-      bot.sendMessage(msg.chat.id, a.slice(1,3)+':'+a.slice(3,6));
-    } else {
-      bot.sendMessage(msg.chat.id, 'TesteTtecasl');
-    }
-  } catch (e) {
-    // console.log(typeof({e: 33}));
-    // console.log(typeof(e));
-  }
-});
 
 bot.onText(/eco/, msg => {
+  console.log('eco');
   bot.sendMessage(msg.chat.id, 'eco');
 });
 
@@ -373,7 +360,6 @@ class Bot {
   /** Error listeners */
   _errorHandlingListeners() {
     bot.on('polling_error', err => logger.error('Polling error - '+err));
-    // bot.on('polling_error', err => logger.error(err));
     bot.on('webhook_error', err => logger.error('Webhook error - '+err));
     bot.on('error', err => logger.error(' > _errorHandlingListeners - '+err));
   }
