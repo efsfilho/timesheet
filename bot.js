@@ -9,7 +9,7 @@ const mm = require('moment');
 mm.locale('pt-BR');
 
 const key = '';
-const bot = new Ntba(key, { polling: { interval: 30000 } });
+const bot = new Ntba(key, { polling: true });
 const app = new App(config);
 
 const CMD_START = /\/start/;
