@@ -21,11 +21,7 @@ const CMD_SHORTCUT = /\/atalho/;                          // /atalho
 const CMD_EDIT = /\/editar\b|^Editar\spontos\b/;
 const CMD_EXPT = /^exp\b/;                                // comando para exportar excel
 
-
-bot.onText(/eco/, msg => {
-  console.log('eco');
-  bot.sendMessage(msg.chat.id, 'eco');
-});
+bot.onText(/eco/, () => logger.info('eco'));
 
 /** Bot */
 class Bot {
@@ -322,8 +318,21 @@ class Bot {
         
         app.updateReg(date.format('YYYY-MM-DD'), typeReg, strNewTime).then(res => {
           if (res.ok) {
+
+            let r = {
+              r1: res.result.r1 > 0 ? mm(res.result.r1).format('HH:mm') : '  -  ',
+              r2: res.result.r2 > 0 ? mm(res.result.r2).format('HH:mm') : '  -  ',
+              r3: res.result.r3 > 0 ? mm(res.result.r3).format('HH:mm') : '  -  ',
+              r4: res.result.r4 > 0 ? mm(res.result.r4).format('HH:mm') : '  -  '
+            }
+
+            let replyMsg = ''+
+              ' Ponto de '+date.format('LL')+' alterado \n'+
+              '  '+r.r1+'  |  '+r.r2+'  |  '+r.r3+'  |  '+r.r4;
+
             /* TODO callback caso nao ocorra a alteracao*/
-            bot.sendMessage(opts.chat_id, 'Ponto alterado '+typeMsg[typeReg]+'\n'+date.format('LL'));
+            // bot.sendMessage(opts.chat_id, 'Ponto alterado '+typeMsg[typeReg]+'\n'+date.format('LL'));
+            bot.sendMessage(opts.chat_id, replyMsg);
           } else {
             this._defaultMessageError(opts.chat_id);
           }

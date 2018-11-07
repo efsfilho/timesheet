@@ -241,7 +241,7 @@ class App {
           if (res.ok) {
             resolve({
               ok: true,
-              result: res.result
+              result: res.result.newTime
             });
           } else {
             reject({ ok: false });
@@ -270,7 +270,10 @@ class App {
         if (newTime.isValid()) {
           this._updateReg(typeReg, newTime.unix()*1000 ).then(res => {
             if (res.ok) {
-              resolve({ ok: true });
+              resolve({
+                ok: true,
+                result: res.result.regUpdated
+              });
             } else {
               reject({ ok: false });
             }
@@ -301,10 +304,11 @@ class App {
       readJSON(fileName).then(data => {
 
         try {
-          let year  = mm(dateTime).year();
-          let month = mm(dateTime).month();
-          let day   = mm(dateTime).date()-1;                // array apartir de 0
-  
+          const year  = mm(dateTime).year();
+          const month = mm(dateTime).month();
+          const day   = mm(dateTime).date()-1;                // array apartir de 0
+          let rUpdated = { r1: 0, r2: 0, r3: 0, r4: 0 };
+
           for (let i = 0; i < data.length; i++) {           // conjunto de registros por ano
             if(data[i].y == year){                          // registro do ano
               if (typeReg == 1) {                           
@@ -319,6 +323,7 @@ class App {
               if (typeReg == 4) {
                 data[i].m[month].d[day].r.r4 = dateTime;    // fim jornada
               }
+              rUpdated = data[i].m[month].d[day].r;
             }
           }
   
@@ -326,7 +331,10 @@ class App {
             if (res.ok) {
               resolve({
                 ok: true,
-                result: mm(dateTime).format()             // retorno do ponto atualizado
+                result: {
+                  newTime: mm(dateTime).format(),         // retorno do ponto atualizado
+                  regUpdated: rUpdated
+                }
               });
             } else {
               reject({ ok: false });
