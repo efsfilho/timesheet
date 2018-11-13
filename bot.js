@@ -13,15 +13,19 @@ const bot = new Ntba(key, { polling: true });
 const app = new App(config);
 
 const CMD_START = /\/start/;
-const CMD_P1 = /^\/c1\b|^Come\ço\sde\sjornada\b/;         // /c1 comando para registro de comeco de jornada
-const CMD_P2 = /^\/c2\b|^Almo\ço\b/;                      // /c2 ' ' registro de almoco
-const CMD_P3 = /^\/c3\b|^Volta\sdo\salmo\ço\b/;           // /c3 ' ' registro de volta de almoco
-const CMD_P4 = /^\/c4\b|^Fim\sde\sjornada\b/;             // /c4 ' ' registro de fim de jornada
+const CMD_P1 = /^\/c1\b|^Come\ço\sde\sjornada\b/;         // /c1  - comando para registro de comeco de jornada
+const CMD_P2 = /^\/c2\b|^Almo\ço\b/;                      // /c2  - ' ' registro de almoco
+const CMD_P3 = /^\/c3\b|^Volta\sdo\salmo\ço\b/;           // /c3  - ' ' registro de volta de almoco
+const CMD_P4 = /^\/c4\b|^Fim\sde\sjornada\b/;             // /c4  - ' ' registro de fim de jornada
 const CMD_SHORTCUT = /\/atalho/;                          // /atalho
 const CMD_EDIT = /\/editar\b|^Editar\spontos\b/;
 const CMD_EXPT = /^exp\b/;                                // comando para exportar excel
+const CMD_LIST = /\/list/;                                // /list - listar pontos do dia
 
-bot.onText(/eco/, () => logger.info('eco'));
+bot.onText(/eco/, msg => {
+  logger.info('eco');
+  bot.sendMessage(msg.chat.id, 'eco');
+});
 
 /** Bot */
 class Bot {
@@ -187,6 +191,34 @@ class Bot {
       });
     });
 
+    bot.onText(CMD_LIST, msg => {                         // listar pontos do dia
+      const chatId = msg.chat.id;
+      const date = mm(msg.chat.time);
+      /* TODO validacoes */
+      app.listDayReg(date.format('YYYY-MM-DD')).then(res => {
+        if (res.ok) {
+          let r = {
+            r1: res.result.r1,
+            r2: res.result.r2,
+            r3: res.result.r3,
+            r4: res.result.r4
+          }
+
+          let replyMsg = ''+
+            ' Ponto de '+date.format('LL')+'\n'+
+            '  '+r.r1+'  |  '+r.r2+'  |  '+r.r3+'  |  '+r.r4;
+
+          bot.sendMessage(chatId, replyMsg);
+        } else {
+          logger.error('Erro ao carregar ponto > _startListeners: '+err);
+          this._defaultMessageError(chatId);
+        }
+      }).catch(err => {
+        logger.error('Erro ao carregar ponto > _startListeners: '+err);
+        this._defaultMessageError(chatId);
+      });
+    });
+
     bot.on('callback_query', cbQuery => {                 // callbacks do calendario
       const action = cbQuery.data;
       const msg = cbQuery.message;
@@ -293,7 +325,6 @@ class Bot {
    * @param {number} opts.message_id - id da mensagem do teclado 
    */
   _callbackQueryUpdateReg(cbQueryData, opts) {
-
     const date = mm(cbQueryData.replace(/\.\w/, ''));
     const action = cbQueryData.replace(/^\./, '');
     const typeReg = /^\d/.exec(action)[0];
@@ -315,10 +346,9 @@ class Bot {
       }
 
       if (/[0-1][0-9]\:?[0-5][0-9]|[2][0-3]\:?[0-5][0-9]/.exec(strNewTime) !== null) {
-        
         app.updateReg(date.format('YYYY-MM-DD'), typeReg, strNewTime).then(res => {
-          if (res.ok) {
 
+          if (res.ok) {
             let r = {
               r1: res.result.r1 > 0 ? mm(res.result.r1).format('HH:mm') : '  -  ',
               r2: res.result.r2 > 0 ? mm(res.result.r2).format('HH:mm') : '  -  ',
@@ -364,6 +394,7 @@ class Bot {
     bot.removeTextListener(CMD_EDIT);
     bot.removeListener('callback_query');
     bot.removeTextListener(CMD_EXPT);
+    bot.removeTextListener(CMD_LIST);
   }
 
   /** Error listeners */
