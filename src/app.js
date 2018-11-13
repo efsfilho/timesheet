@@ -291,6 +291,36 @@ class App {
   }
 
   /**
+   * Carrega ponto do dia
+   * @param {string} date - moment date YYYY-MM-DD
+   */ 
+  listDayReg(date) {
+    return new Promise((resolve, reject) => {
+      /* TODO validar as pesquisas */
+      this._getReg(date).then(res => {
+        if (res.ok) {
+          // let data = res.result;
+          let rUpdated = {
+            r1: res.result.r1 > 0 ? mm(res.result.r1).format('HH:mm') : '  -  ',
+            r2: res.result.r2 > 0 ? mm(res.result.r2).format('HH:mm') : '  -  ',
+            r3: res.result.r3 > 0 ? mm(res.result.r3).format('HH:mm') : '  -  ',
+            r4: res.result.r4 > 0 ? mm(res.result.r4).format('HH:mm') : '  -  '
+          }
+          resolve({
+            ok: true,
+            result: rUpdated
+          });
+        } else {
+          reject({ ok: false });
+        }
+      }).catch(err => {
+        logger.error('Erro carregar ponto > listDayReg: '+JSON.stringify(err));
+        reject({ ok: false });
+      });
+    });
+  }  
+
+  /**
    * Atualiza ponto
    * @param {number} typeReg - tipo reg (1, 2, 3 ou 4)
    * @param {number} dateTime - unix timestamp
