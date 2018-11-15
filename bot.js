@@ -8,7 +8,7 @@ const App = require('./src/app');
 const mm = require('moment');
 mm.locale('pt-BR');
 
-const key = '';
+const key = process.env.b2;
 const bot = new Ntba(key, { polling: true });
 const app = new App(config);
 
@@ -169,26 +169,53 @@ class Bot {
       }
     });
 
-    bot.onText(CMD_EDIT, msg => {                         // teclado calendario
-      const chatId = msg.chat.id;
+    bot.onText(CMD_EDIT, msg => {
       const date = mm(msg.chat.time);
+      const strDate = date.format('YYYY-MM-DD');
+      const opts = {
+        chat_id: msg.chat.id,
+        message_id: msg.message_id
+      }
 
-      app.mountKeyboardCalendar(date).then(res => {
+      app.mountKeyboardRegs(strDate).then(res => {
         if (res.ok) {
-          bot.sendMessage(chatId, 'Escolha o dia: ', {
+          let inlineKb = res.result.inline_keyboard[0].slice();
+          inlineKb.push({ text: 'Pontos', callback_data: '*'+date.format('YYYY-MM') });
+
+          bot.sendMessage(opts.chat_id, ''+date.format('LL')+'', {
             reply_markup: {
-              inline_keyboard: res.result,
+              inline_keyboard: [inlineKb],
               resize_keyboard: true
             }
           });
         } else {
-          logger.error('Erro ao carregar teclado > _startListeners: '+err);
-          this._defaultMessageError(chatId);
+          logger.info('Falha ao carregar ponto > _startListeners');
+          this._defaultMessageError(opts.chat_id);
         }
       }).catch(err => {
-        logger.error('Erro ao montar teclado > _startListeners: '+err);
-        this._defaultMessageError(chatId);
+        logger.error('Erro ao carregar ponto > _startListeners: '+err);
+        this._defaultMessageError(opts.chat_id);
       });
+
+      // const chatId = msg.chat.id;
+      // const date = mm(msg.chat.time);
+
+      // app.mountKeyboardCalendar(date).then(res => {       // monta calendario
+      //   if (res.ok) {
+      //     bot.sendMessage(chatId, 'Escolha o dia: ', {
+      //       reply_markup: {
+      //         inline_keyboard: res.result,
+      //         resize_keyboard: true
+      //       }
+      //     });
+      //   } else {
+      //     logger.error('Erro ao carregar teclado > _startListeners: '+err);
+      //     this._defaultMessageError(chatId);
+      //   }
+      // }).catch(err => {
+      //   logger.error('Erro ao montar teclado > _startListeners: '+err);
+      //   this._defaultMessageError(chatId);
+      // });
     });
 
     bot.onText(CMD_LIST, msg => {                         // listar pontos do dia
@@ -222,21 +249,26 @@ class Bot {
     bot.on('callback_query', cbQuery => {                 // callbacks do calendario
       const action = cbQuery.data;
       const msg = cbQuery.message;
+      const date = cbQuery.message.date;
       const opts = {
         chat_id: msg.chat.id,
         message_id: msg.message_id
       };
-      
-      if (/<|>/.exec(action) !== null) {
-        this._callbackQueryKeyBoardCalendar(action, opts); // botao avanca/retrocede mes
+
+      if (/\*/.exec(action) !== null) {                   // *YYYY-MM ex: *2018-05
+        this._callbackQueryKeyBoardCalendar(action, opts); // call calendario
       }
       
-      if (/\+/.exec(action) !== null) {
-        this._callbackQueryKeyBoardRegs(action, opts);    // botao dia
+      if (/<|>/.exec(action) !== null) {                  // (<,>)YYYY-MM ex: <2018-05
+        this._callbackQueryUpdateKeyBoardCalendar(action, opts); // botao avanca/retrocede mes
+      }
+      
+      if (/\+/.exec(action) !== null) {                   // +YYYY-MM-DD ex: +2018-09-14
+        this._callbackQueryKeyBoardRegs(action, date, opts); // pontos do dia
       }
 
-      if (/\./.exec(action)) {
-        this._callbackQueryUpdateReg(action, opts);       // botao registro do ponto
+      if (/\./.exec(action)) {                            // .NYYYY-MM-DD ex: .32018-09-25
+        this._callbackQueryUpdateReg(action, opts);       // ponto
       }
     });
 
@@ -268,15 +300,15 @@ class Bot {
   _defaultMessageError(chatId) {
     bot.sendMessage(chatId, 'Não foi possível executar operação');
   }
-  
+
   /**
-   * Callback do botao avanca/retrocede mes
-   * @param {string} cbQueryData - padrao (<|>)YYYY-MM exemplo: <2018-05
+   * Callback do botao avanca/retrocede mes(atualiza calendario)
+   * @param {string} cbQueryData - padrao (<,>)YYYY-MM exemplo: <2018-05
    * @param {object} opts
    * @param {number} opts.chat_id - id do chat do teclado
    * @param {number} opts.message_id - id da mensagem do teclado
    */
-  _callbackQueryKeyBoardCalendar(cbQueryData, opts) {
+  _callbackQueryUpdateKeyBoardCalendar(cbQueryData, opts) {
     let srtDate = cbQueryData.replace(/<|>/g, '');        // remove char verificador
     app.mountKeyboardCalendar(mm(srtDate)).then(res => {
       if (res.ok) {
@@ -287,7 +319,7 @@ class Bot {
         this._defaultMessageError(opts.chat_id);
       }
     }).catch(err => {
-      logger.error('Erro ao atualizar teclado calendario > _callbackQueryKeyBoardCalendar: '+err);
+      logger.error('Erro ao atualizar teclado calendario > _callbackQueryUpdateKeyBoardCalendar: '+err);
       this._defaultMessageError(opts.chat_id);
     });
   }
@@ -296,17 +328,30 @@ class Bot {
    * Callback do botao dia
    * @param {string} cbQueryData - padrao +YYYY-MM-DD exemplo: +2018-09-14
    * @param {object} opts
+   * @param {number} date - chat unix timestamp
    * @param {number} opts.chat_id - id do chat do teclado
    * @param {number} opts.message_id - id da mensagem do teclado 
    */
-  _callbackQueryKeyBoardRegs(cbQueryData, opts) {
-    // let strDate = mm(cbQueryData.replace(/\+/, '')).format('YYYY-MM-DD');
-    let strDate = cbQueryData.replace(/\+/, '')
+  _callbackQueryKeyBoardRegs(cbQueryData, date, opts) {
+    let strDate = cbQueryData.replace(/\+/, '');
     /* TODO fazer uma validacao decente */
     return app.mountKeyboardRegs(strDate).then(res => {
       if (res.ok) {
-        bot.editMessageText(mm(strDate).format('LL'), opts);
-        bot.editMessageReplyMarkup(res.result, opts);
+
+        let cbCalendar = '*'+mm(date*1000).format('YYYY-MM')
+        let inlineKb = res.result.inline_keyboard[0].slice();
+        inlineKb.push({ text: 'Pontos', callback_data: cbCalendar });
+
+        let rm = {
+          inline_keyboard: [inlineKb]
+        }
+
+        bot.editMessageText(mm(strDate).format('LL'), opts).then(() => {
+          bot.editMessageReplyMarkup(rm, opts);
+        });
+
+        // bot.editMessageText(mm(strDate).format('LL'), opts);
+        // bot.editMessageReplyMarkup(res.result, opts);
       } else {
         logger.info('Falha no calendario > _callbackQueryKeyBoardRegs');
         this._defaultMessageError(opts.chat_id);
@@ -378,12 +423,35 @@ class Bot {
       }
     })
   }
+  
+  /**
+   * Monta calendario
+   * @param {string} cbQueryData - padrao *YYYY-MM exemplo: *2018-05
+   * @param {object} opts
+   * @param {number} opts.chat_id - id do chat do teclado
+   * @param {number} opts.message_id - id da mensagem do teclado
+   */
+  _callbackQueryKeyBoardCalendar(cbQueryData, opts) {
+    let srtDate = cbQueryData.replace(/\*/, '');          // remove char verificador
+    app.mountKeyboardCalendar(mm(srtDate)).then(res => {
+      if (res.ok) {
+        bot.editMessageText('Pontos', opts).then(() => {
+          bot.editMessageReplyMarkup({ inline_keyboard: res.result }, opts);
+        });
+      } else {
+        this._defaultMessageError(opts.chat_id);
+      }
+    }).catch(err => {
+      logger.error('Erro ao atualizar teclado calendario >  _callbackQueryKeyBoardCalendar : '+err);
+      this._defaultMessageError(opts.chat_id);
+    });
+  }
 
   /** Desativa todos os listeners de comandos(iniciados no _startListeners) */
   _stopListeners() {
     /*
-      Serve para escutar a resposta de uma mensagem do _callbackQueryUpdateReg, 
-      porque onReplyToMessage nao funciona 
+      Serve para receber a nova hora/min digitada pelo usuario.
+      Ocorre apos o _callbackQueryUpdateReg, porque onReplyToMessage nao funciona 
       https://github.com/yagop/node-telegram-bot-api/issues/113
     */
     bot.removeTextListener(CMD_P1);

@@ -266,6 +266,7 @@ class App {
           reject({ ok: false });
         }
 
+        /* TODO validacoes */
         const newTime = mm(date+' '+strNewTime);
         if (newTime.isValid()) {
           this._updateReg(typeReg, newTime.unix()*1000 ).then(res => {
