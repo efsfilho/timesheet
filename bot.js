@@ -8,7 +8,7 @@ const App = require('./src/app');
 const mm = require('moment');
 mm.locale('pt-BR');
 
-const key = process.env.b2;
+const key = '';
 const bot = new Ntba(key, { polling: true });
 const app = new App(config);
 
@@ -86,8 +86,9 @@ class Bot {
     bot.onText(CMD_P1, msg => {
       const chatId = msg.chat.id;
       app.addReg(1, msg.date).then(res => {
+
         if (res.ok) {
-          let replyMsg = 'Começo de jornada: '+mm(res.result).format('HH:mm');
+          let replyMsg = this._defaultMessageUpdateReg(res.result, msg.date*1000);
           bot.sendMessage(chatId, replyMsg);
         } else {
           this._defaultMessageError(chatId);
@@ -293,14 +294,6 @@ class Bot {
     });
   }
 
-  /** 
-   * Mensagem de erro padrao
-   * @param {number} chatId - id do chat para o envio do erro
-   */
-  _defaultMessageError(chatId) {
-    bot.sendMessage(chatId, 'Não foi possível executar operação');
-  }
-
   /**
    * Callback do botao avanca/retrocede mes(atualiza calendario)
    * @param {string} cbQueryData - padrao (<,>)YYYY-MM exemplo: <2018-05
@@ -445,6 +438,37 @@ class Bot {
       logger.error('Erro ao atualizar teclado calendario >  _callbackQueryKeyBoardCalendar : '+err);
       this._defaultMessageError(opts.chat_id);
     });
+  }
+
+  /** 
+   * Mensagem de erro padrao
+   * @param {number} chatId - id do chat para o envio do erro
+   */
+  _defaultMessageError(chatId) {
+    bot.sendMessage(chatId, 'Não foi possível executar operação');
+  }
+
+  /**
+   * Get mensagem de registro/update de ponto
+   */
+  _defaultMessageUpdateReg(reg, date){
+    let formatReg = r => r > 0 ? mm(r).format('HH:mm') : '  -  ';
+    try {
+      let r = {
+        r1: formatReg(reg.r1),
+        r2: formatReg(reg.r2),
+        r3: formatReg(reg.r3),
+        r4: formatReg(reg.r4)
+      }
+      
+      let replyMsg = ''+
+        ' Começo de Jornada '+mm(date).format('L')+' \n'+
+        '  '+r.r1+'  |  '+r.r2+'  |  '+r.r3+'  |  '+r.r4;
+
+      return replyMsg;
+    } catch (error) {
+      
+    }
   }
 
   /** Desativa todos os listeners de comandos(iniciados no _startListeners) */
