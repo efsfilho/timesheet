@@ -457,6 +457,7 @@ class Bot {
   _defaultMessageUpdateReg(reg, typeReg, date){
 
     let formatReg = r => r > 0 ? mm(r).format('HH:mm') : '  -  ';
+    let replyMsg = '';
 
     try {
       let r = {
@@ -465,8 +466,6 @@ class Bot {
         r3: formatReg(reg.r3),
         r4: formatReg(reg.r4)
       }
-
-      let replyMsg = '';
 
       switch (typeReg) {
         case 1: // comeco jornada
@@ -486,14 +485,13 @@ class Bot {
           replyMsg += '';
           break;
       }
-     
+
       replyMsg += '  '+r.r1+'  |  '+r.r2+'  |  '+r.r3+'  |  '+r.r4;
-
-      return replyMsg;
-
-    } catch (error) {
-      // TODO err
+    } catch (err) {
+      replyMsg = '';
+      logger.error('Erro ao criar mensagem > _defaultMessageUpdateReg : '+err);
     }
+    return replyMsg;
   }
 
   /** Desativa todos os listeners de comandos(iniciados no _startListeners) */
@@ -503,15 +501,19 @@ class Bot {
       Ocorre apos o _callbackQueryUpdateReg, porque onReplyToMessage nao funciona 
       https://github.com/yagop/node-telegram-bot-api/issues/113
     */
-    bot.removeTextListener(CMD_P1);
-    bot.removeTextListener(CMD_P2);
-    bot.removeTextListener(CMD_P3);
-    bot.removeTextListener(CMD_P4);
-    bot.removeTextListener(CMD_SHORTCUT);
-    bot.removeTextListener(CMD_EDIT);
-    bot.removeListener('callback_query');
-    bot.removeTextListener(CMD_EXPT);
-    bot.removeTextListener(CMD_LIST);
+    try {
+      bot.removeTextListener(CMD_P1);
+      bot.removeTextListener(CMD_P2);
+      bot.removeTextListener(CMD_P3);
+      bot.removeTextListener(CMD_P4);
+      bot.removeTextListener(CMD_SHORTCUT);
+      bot.removeTextListener(CMD_EDIT);
+      bot.removeListener('callback_query');
+      bot.removeTextListener(CMD_EXPT);
+      bot.removeTextListener(CMD_LIST);
+    } catch (err) {
+      logger.error('Erro ao desativar listeners > _stopListener : '+err);
+    }
   }
 
   /** Error listeners */
