@@ -88,7 +88,7 @@ class Bot {
       app.addReg(1, msg.date).then(res => {
 
         if (res.ok) {
-          let replyMsg = this._defaultMessageUpdateReg(res.result, msg.date*1000);
+          let replyMsg = this._defaultMessageUpdateReg(res.result, msg.date);
           bot.sendMessage(chatId, replyMsg);
         } else {
           this._defaultMessageError(chatId);
@@ -450,9 +450,14 @@ class Bot {
 
   /**
    * Get mensagem de registro/update de ponto
+   * @param {object} reg - registros do ponto dia
+   * @param {number} typeReg - tipo de registro(1 - 4)
+   * @param {date} date - timestamp
    */
-  _defaultMessageUpdateReg(reg, date){
+  _defaultMessageUpdateReg(reg, typeReg, date){
+
     let formatReg = r => r > 0 ? mm(r).format('HH:mm') : '  -  ';
+
     try {
       let r = {
         r1: formatReg(reg.r1),
@@ -460,14 +465,34 @@ class Bot {
         r3: formatReg(reg.r3),
         r4: formatReg(reg.r4)
       }
-      
-      let replyMsg = ''+
-        ' Começo de Jornada '+mm(date).format('L')+' \n'+
-        '  '+r.r1+'  |  '+r.r2+'  |  '+r.r3+'  |  '+r.r4;
+
+      let replyMsg = '';
+
+      switch (typeReg) {
+        case 1: // comeco jornada
+          replyMsg += ' Começo de Jornada '+mm(date*1000).format('L')+' \n';
+          break;
+        case 2: // comeco almoco
+          replyMsg += ' Almoço '+mm(date*1000).format('L')+' \n';
+          break;
+        case 3: // fim almoco
+          replyMsg += ' Volta do almoço '+mm(date*1000).format('L')+' \n';
+          break;
+        case 4: // fim jornada
+          replyMsg += ' Fim de jornada '+mm(date*1000).format('L')+' \n';
+          break;
+
+        default:
+          replyMsg += '';
+          break;
+      }
+     
+      replyMsg += '  '+r.r1+'  |  '+r.r2+'  |  '+r.r3+'  |  '+r.r4;
 
       return replyMsg;
+
     } catch (error) {
-      
+      // TODO err
     }
   }
 
