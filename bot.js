@@ -23,7 +23,7 @@ const CMD_EXPT = /^exp\b/;                                // comando para export
 const CMD_LIST = /\/list/;                                // /list - listar pontos do dia
 
 bot.onText(/eco/, msg => {
-  logger.info('eco');
+  logger.debug('eco');
   bot.sendMessage(msg.chat.id, 'eco');
 });
 

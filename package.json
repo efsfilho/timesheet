@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "nodemon bot.js",
+    "test": "NODE_ENV=dev nodemon bot.js",
     "start": "node bot.js"
   },
   "repository": {

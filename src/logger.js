@@ -33,19 +33,26 @@ const logger = winston.createLogger({
     winston.format.printf(info => logFormat(info))
   ),
   transports: [
-    new winston.transports.Console(),
     new winston.transports.File({
       filename: config.logLocal+'/error.log',
       level: 'error',
-      maxsize:  5000000, // bytes
+      maxsize:  5000000,
       maxFiles: 5
     }),
     new winston.transports.File({
       filename: config.logLocal+'/log.log',
-      maxsize:  5000000, // bytes
+      maxsize:  5000000,
       maxFiles: 5
-    }),
+    })
   ]
 });
+
+if (process.env.NODE_ENV === 'dev') {
+  logger.add(new winston.transports.Console());
+}
+
+if (process.env.NODE_ENV === 'debug') {
+  logger.add(new winston.transports.Console({ level: 'debug' }));
+}
 
 module.exports = logger;
