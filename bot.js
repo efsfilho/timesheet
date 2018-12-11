@@ -88,7 +88,7 @@ class Bot {
       app.addReg(1, msg.date).then(res => {
 
         if (res.ok) {
-          let replyMsg = this._defaultMessageUpdateReg(res.result, msg.date);
+          let replyMsg = this._defaultMessageUpdateReg(res.result, 1, msg.date);
           bot.sendMessage(chatId, replyMsg);
         } else {
           this._defaultMessageError(chatId);
@@ -103,7 +103,7 @@ class Bot {
       const chatId = msg.chat.id;
       app.addReg(2, msg.date).then(res => {
         if (res.ok) {
-          let replyMsg = 'Almoço: '+mm(res.result).format('HH:mm');
+          let replyMsg = this._defaultMessageUpdateReg(res.result, 2, msg.date);
           bot.sendMessage(chatId, replyMsg);
         } else {
           this._defaultMessageError(chatId);
@@ -118,7 +118,7 @@ class Bot {
       const chatId = msg.chat.id;
       app.addReg(3, msg.date).then(res => {
         if (res.ok) {
-          let replyMsg = 'Volta do Almoço: '+mm(res.result).format('HH:mm');
+          let replyMsg = this._defaultMessageUpdateReg(res.result, 3, msg.date);
           bot.sendMessage(chatId, replyMsg);
         } else {
           this._defaultMessageError(chatId);
@@ -133,7 +133,7 @@ class Bot {
       const chatId = msg.chat.id;
       app.addReg(4, msg.date).then(res => {
         if (res.ok) {
-          let replyMsg = 'Fim de Jornada '+mm(res.result).format('HH:mm');
+          let replyMsg = this._defaultMessageUpdateReg(res.result, 4, msg.date);
           bot.sendMessage(chatId, replyMsg);
         } else {
           this._defaultMessageError(chatId);

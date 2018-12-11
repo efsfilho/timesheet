@@ -241,7 +241,7 @@ class App {
           if (res.ok) {
             resolve({
               ok: true,
-              result: res.result.newTime
+              result: res.result.regUpdated
             });
           } else {
             reject({ ok: false });
