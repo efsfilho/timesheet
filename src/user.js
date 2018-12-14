@@ -1,23 +1,25 @@
 const mm = require('moment');
 const logger = require('./logger');
 
-const { existsFile, saveJSON, readJSON, checkDir } = require('./utils.js');
+const { existsFile, saveJSON, readJSON } = require('./utils.js');
 
 /**  Usuario */
 class User {
 
   /**
-   * @param {object} userObj - usuario
-   * @param {number} userObj.id - id do contato
-   * @param {string} userObj.username - username do contato
-   * @param {number} userObj.name - nomde do contato
-   * @param {boolean} userObj.bot - bot
-   * @param {number} userObj.date - data do chat
+   * @param {object} userData - usuario
+   * @param {number} userData.id - id do contato
+   * @param {string} userData.username - username do contato
+   * @param {number} userData.name - nomde do contato
+   * @param {boolean} userData.bot - bot
+   * @param {number} userData.date - data do chat
    * @param {object} config - dados dos diretorios
    * @param {string} config.userIndexLocal - arquivo com usuarios
    * @param {string} config.userRegsLocal - arquivo registros
    */
   constructor(userData, config) {
+    
+    if (!this._validateUser(userData)) throw Error('Objeto usuário inválido');
     this.user = userData;
     this.userIndexLocal = config.userIndexLocal;          // local do arquivo com os usuarios
     this.userRegsLocal = config.userRegsLocal;            // local dos registros
@@ -26,26 +28,32 @@ class User {
     return this.user;
   }
 
+  /** Valida as propriedades do objeto Usuario */
+  _validateUser(obj) {
+    /* TODO validar os tipos */
+    return ['id', 'username', 'name', 'bot', 'date'].every(el => obj.hasOwnProperty(el));
+  }
+
   /** Verifica a existencia do usuario */
   _checkUser() {
     const user = this.user;
-    // Object.keys(user).length > 0 ?                     // TODO verificar objeto
 
     const usersFileName = this.userIndexLocal
       +this.userIndexFilneName;                           // arquivo com id dos usuarios
 
     const regFileName = this.userRegsLocal
-      +this.user.id+'.json';                              // nome do arquivo recebe o id do usuario
+      +user.id+'.json';                              // nome do arquivo recebe o id do usuario
 
     if (existsFile(usersFileName)) {
 
       readJSON(usersFileName).then(data => {
         try {
           let obj = data
-          let userExists = obj.filter(usr => usr.id == this.user.id ).length > 0;
+          let userExists = obj.filter(usr => usr.id == user.id ).length > 0;
           if (!userExists) {
-            obj.push(this.user);                          // adiciona o usuario aos outros existentes
+            obj.push(user);                          // adiciona o usuario aos outros existentes
             saveJSON(usersFileName, obj);                 // sobrescreve arquivo usuarios
+            logger.debug(JSON.stringify(user));
             logger.info('User adicionado: userId: '+user.id+' - '+user.username);
           }
         } catch (err) {
@@ -55,7 +63,7 @@ class User {
       
     } else {
       try {
-        saveJSON(usersFileName, [this.user]);             // cria arquivo com o primeiro usuario
+        saveJSON(usersFileName, [user]);             // cria arquivo com o primeiro usuario
         logger.info('Arquivo '+usersFileName+' criado.');
         logger.info('User adicionado: userId: '+user.id+' - '+user.username);
       } catch (err) {

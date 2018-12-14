@@ -19,7 +19,7 @@ const CMD_P3 = /^\/c3\b|^Volta\sdo\salmo\ço\b/;           // /c3  - ' ' registr
 const CMD_P4 = /^\/c4\b|^Fim\sde\sjornada\b/;             // /c4  - ' ' registro de fim de jornada
 const CMD_SHORTCUT = /\/atalho/;                          // /atalho
 const CMD_EDIT = /\/editar\b|^Editar\spontos\b/;
-const CMD_EXPT = /^exp\b/;                                // comando para exportar excel
+const CMD_EXPT = /\/^exp\b/;                                // comando para exportar excel
 const CMD_LIST = /\/list/;                                // /list - listar pontos do dia
 
 bot.onText(/eco/, msg => {
@@ -31,14 +31,22 @@ bot.onText(/eco/, msg => {
 class Bot {
 
   constructor() {
-    this._mainListener();                                 // inicia listener principal 
-    this._startListeners();                               // inicia listeners de comandos
-    this._errorHandlingListeners();                       // inicia listeners de erros
-    this._shortcutMode = false;                           // flag de modo atalho
+    /*
+      _mainListener inicia listener que sincroniza usuario
+      _startListeners inicia listeners de comandos
+      _errorHandlingListeners listeners de erro
+      _shortcutMode flag de modo atalho
+    */
+    this._mainListener();
+    this._startListeners();
+    this._errorHandlingListeners();
+    this._shortcutMode = false;
   }
 
   /** Listeners principais */
-  _mainListener() {                                       // _mainListener nao e parado pelo _stopListeners
+  _mainListener() {
+    
+    /* Listener que sincroniza o usuario */
     bot.on('message', msg => {
       if (app.user == null) {
         let user = this._getUser(msg);
@@ -46,7 +54,8 @@ class Bot {
       }
     });
 
-    bot.onText(CMD_START, msg => {                        // /start
+    /* Listener start commando */
+    bot.onText(CMD_START, msg => {
       const chatId = msg.chat.id;
       bot.sendMessage(chatId, 'Bem vindo');
     });
@@ -75,14 +84,15 @@ class Bot {
         user.date = msg.date;
       }
     } catch (err) {
-      logger.error('Erro ao carregar estruturado usuario > _getUser: '+err);
+      logger.error('Bot > _getUser -> Erro ao carregar estruturado usuario: '+err);
     }
     return user;
   }
 
-  /** Carrega listeners */
+  /** Listeners dos comandos */
   _startListeners() {
 
+    /* Listener para comeco de jornada */
     bot.onText(CMD_P1, msg => {
       const chatId = msg.chat.id;
       app.addReg(1, msg.date).then(res => {
@@ -94,11 +104,12 @@ class Bot {
           this._defaultMessageError(chatId);
         }
       }).catch(err => {
-        logger.error('Erro ao registrar ponto > _startListeners: '+err);
+        logger.error('Bot > _startListeners > ontext(CMD_P1) -> Erro ao registrar ponto : '+err);
         this._defaultMessageError(chatId);
       })
     });
 
+    /* Listener saida para almoco */
     bot.onText(CMD_P2, msg => {
       const chatId = msg.chat.id;
       app.addReg(2, msg.date).then(res => {
@@ -109,11 +120,12 @@ class Bot {
           this._defaultMessageError(chatId);
         }
       }).catch(err => {
-        logger.error('Erro ao registrar ponto > _startListeners: '+err);
+        logger.error('Bot > _startListeners > onText(CMD_P2) -> Erro ao registrar ponto: '+err);
         this._defaultMessageError(chatId);
       })
     });
 
+    /* Listener para chegada do almoco */
     bot.onText(CMD_P3, msg => {
       const chatId = msg.chat.id;
       app.addReg(3, msg.date).then(res => {
@@ -124,11 +136,12 @@ class Bot {
           this._defaultMessageError(chatId);
         }
       }).catch(err => {
-        logger.error('Erro ao registrar ponto > _startListeners: '+err);
+        logger.error('Bot > _startListeners > onText(CMD_P3) -> Erro ao registrar ponto: '+err);
         this._defaultMessageError(chatId);
       })
     });
     
+    /* Listener para fim de jornada */
     bot.onText(CMD_P4, msg => {
       const chatId = msg.chat.id;
       app.addReg(4, msg.date).then(res => {
@@ -139,12 +152,13 @@ class Bot {
           this._defaultMessageError(chatId);
         }
       }).catch(err => {
-        logger.error('Erro ao registrar ponto > _startListeners: '+err);
+        logger.error('Bot > _startListeners > onText(CMD_P4) -> Erro ao registrar ponto:  '+err);
         this._defaultMessageError(chatId);
       })
     });
 
-    bot.onText(CMD_SHORTCUT, msg => {                     // modo atalho/comando
+    /* Listener para mudar teclado (lista de comando/botoes ) */
+    bot.onText(CMD_SHORTCUT, msg => {
       const chatId = msg.chat.id;
       if (!this._shortcutMode) {
         this._shortcutMode = true;
@@ -170,6 +184,7 @@ class Bot {
       }
     });
 
+    /* Listener botoes editar pontos */
     bot.onText(CMD_EDIT, msg => {
       const date = mm(msg.chat.time);
       const strDate = date.format('YYYY-MM-DD');
@@ -190,39 +205,20 @@ class Bot {
             }
           });
         } else {
-          logger.info('Falha ao carregar ponto > _startListeners');
+          logger.info('Bot > _startListeners > onText(CMD_EDIT) -> Erro ao carregar botoes do ponto:');
           this._defaultMessageError(opts.chat_id);
         }
       }).catch(err => {
-        logger.error('Erro ao carregar ponto > _startListeners: '+err);
+        logger.error('Bot > _startListeners > onText(CMD_EDIT) -> Erro ao carregar ponto: '+err);
         this._defaultMessageError(opts.chat_id);
       });
-
-      // const chatId = msg.chat.id;
-      // const date = mm(msg.chat.time);
-
-      // app.mountKeyboardCalendar(date).then(res => {       // monta calendario
-      //   if (res.ok) {
-      //     bot.sendMessage(chatId, 'Escolha o dia: ', {
-      //       reply_markup: {
-      //         inline_keyboard: res.result,
-      //         resize_keyboard: true
-      //       }
-      //     });
-      //   } else {
-      //     logger.error('Erro ao carregar teclado > _startListeners: '+err);
-      //     this._defaultMessageError(chatId);
-      //   }
-      // }).catch(err => {
-      //   logger.error('Erro ao montar teclado > _startListeners: '+err);
-      //   this._defaultMessageError(chatId);
-      // });
     });
 
-    bot.onText(CMD_LIST, msg => {                         // listar pontos do dia
+    /* Listener exibe registros do dia */
+    bot.onText(CMD_LIST, msg => {
       const chatId = msg.chat.id;
       const date = mm(msg.chat.time);
-      /* TODO validacoes */
+
       app.listDayReg(date.format('YYYY-MM-DD')).then(res => {
         if (res.ok) {
           let r = {
@@ -238,16 +234,17 @@ class Bot {
 
           bot.sendMessage(chatId, replyMsg);
         } else {
-          logger.error('Erro ao carregar ponto > _startListeners: '+err);
+          logger.error('Bot > _startListeners > onText(CMD_LIST) -> Erro ao carregar ponto: '+err);
           this._defaultMessageError(chatId);
         }
       }).catch(err => {
-        logger.error('Erro ao carregar ponto > _startListeners: '+err);
+        logger.error('Bot > _startListeners > onText(CMD_LIST) -> Erro ao carregar ponto: '+err);
         this._defaultMessageError(chatId);
       });
     });
 
-    bot.on('callback_query', cbQuery => {                 // callbacks do calendario
+    /* Listener que recebe as acoes dos botoes */
+    bot.on('callback_query', cbQuery => {
       const action = cbQuery.data;
       const msg = cbQuery.message;
       const date = cbQuery.message.date;
@@ -256,24 +253,33 @@ class Bot {
         message_id: msg.message_id
       };
 
-      if (/\*/.exec(action) !== null) {                   // *YYYY-MM ex: *2018-05
-        this._callbackQueryKeyBoardCalendar(action, opts); // call calendario
-      }
-      
-      if (/<|>/.exec(action) !== null) {                  // (<,>)YYYY-MM ex: <2018-05
-        this._callbackQueryUpdateKeyBoardCalendar(action, opts); // botao avanca/retrocede mes
-      }
-      
-      if (/\+/.exec(action) !== null) {                   // +YYYY-MM-DD ex: +2018-09-14
-        this._callbackQueryKeyBoardRegs(action, date, opts); // pontos do dia
+      /* acao dos botao editar(que chama o calendario) */
+      if (/\*/.exec(action) !== null) {
+        /* formato do action: *YYYY-MM exemplo: *2018-05 */
+        this._callbackQueryKeyBoardCalendar(action, opts);
       }
 
-      if (/\./.exec(action)) {                            // .NYYYY-MM-DD ex: .32018-09-25
-        this._callbackQueryUpdateReg(action, opts);       // ponto
+      /* acao dos botoes avanca/retrocede mes (dentro do calendario) */
+      if (/<|>/.exec(action) !== null) {
+        /* formato do action: (<,>)YYYY-MM exemplo: <2018-05 */
+        this._callbackQueryUpdateKeyBoardCalendar(action, opts);
+      }
+      
+      /* acao dos botoes dos dias (dentro do calendario) */
+      if (/\+/.exec(action) !== null) {
+        /* formato do action: +YYYY-MM-DD exemplo: +2018-09-14 */
+        this._callbackQueryKeyBoardRegs(action, date, opts);
+      }
+
+      /* acao doa botoes dos 4 registros do ponto(para editar os pontos) */
+      if (/\./.exec(action)) {
+        /* formato do action: .NYYYY-MM-DD ex: .32018-09-25 */
+        this._callbackQueryUpdateReg(action, opts);
       }
     });
 
-    bot.onText(CMD_EXPT, msg => {                         // excel export
+    /* Listener com comando para exportar folha */
+    bot.onText(CMD_EXPT, msg => {
       const chatId = msg.chat.id;
       app.export().then(res => {
         if (res.ok) {
@@ -284,11 +290,11 @@ class Bot {
             /* https://github.com/yagop/node-telegram-bot-api/blob/master/doc/usage.md#sending-files */
           });
         } else {
-          logger.error('Erro ao exportar arquivo > _startListeners: '+err);
+          logger.error('Bot > _startListeners > onText(CMD_EXPT) -> Erro ao exportar arquivo: '+err);
           this._defaultMessageError(chatId);
         }
       }).catch(err => {
-        logger.error('Erro ao exportar arquivo > _startListeners: '+err);
+        logger.error('Bot > _startListeners > onText(CMD_EXPT) -> Erro ao exportar arquivo: '+err);
         this._defaultMessageError(chatId);
       })
     });
