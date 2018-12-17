@@ -6,7 +6,7 @@ const logger = require('./logger');
 
 const { existsFile, saveJSON, readJSON, checkDir, readFile } = require('./utils');
 
-const modelFileName = './src/file.xlsx'; // excel fonte para exportação 
+const modelFileName = './src/file.xlsx'; // excel fonte para exportaçao 
 
 /** App */
 class App {
@@ -21,15 +21,21 @@ class App {
     this._checkDirectories();
   }
 
-  /** Garante a existencia dos diretorios padrão  */
+  /** Garante a existencia dos diretorios padrao  */
   _checkDirectories() {
     try {
-      checkDir(this.config.logLocal);                     // verifica local do log
-      checkDir(this.config.userIndexLocal);               // verifica local do arquivo do usuario
-      checkDir(this.config.userRegsLocal);                // verifica local dos registros do usuario
+      /*
+        config.logLocal        local do log
+        config.userIndexLocal  local do arquivo do usuario
+        config.userRegsLocal   local dos registros do usuario
+        config.exportLocal     local temporario dos arquivos para exportacao
+      */
+      checkDir(this.config.logLocal);
+      checkDir(this.config.userIndexLocal);
+      checkDir(this.config.userRegsLocal);
       checkDir(this.config.exportLocal);
     } catch (err) {
-      logger.error('Diretorios padrão não criados > checkDirectories: '+err);
+      logger.error('App > checkDirectories -> Diretorios padrão não criados: '+err);
     }
   }
   
@@ -44,10 +50,10 @@ class App {
    */
   syncUser(userObj) {
     try {
-      this.user = new User(userObj, this.config);         // verifica/add usuario e regs
+      this.user = new User(userObj, this.config);
     } catch (err) {
       this.user = null;
-      logger.error('Erro ao sincronizar usuario > '+err);
+      logger.error('App > syncUser -> Erro ao sincronizar usuario: '+err);
     }
   }
 
@@ -58,11 +64,14 @@ class App {
   mountKeyboardCalendar(date) {
     return new Promise((resolve, reject) => {
 
-      let prev = mm(date).subtract(1, 'month').format('YYYY-MM');  // callback query para o mes anterior
-      let next = mm(date).add(1, 'month').format('YYYY-MM');       // callback query para o proximo mes
+      /* callback query para o mes anterior */
+      let prev = mm(date).subtract(1, 'month').format('YYYY-MM');
+
+      /* callback query para o proximo mes */
+      let next = mm(date).add(1, 'month').format('YYYY-MM');
 
       let keyBoard = [
-        [                                                 // primeira linha do teclado
+        [  /* primeira linha do teclado */
           {
             text: '<',
             callback_data: '<'+prev
@@ -73,7 +82,7 @@ class App {
             text: '>',
             callback_data: '>'+next
           }
-        ],[                                               // segunda linha
+        ],[ /* segunda linha */
           {
             text: 'Dom',
             callback_data: '-'
@@ -108,33 +117,30 @@ class App {
             let buttons = [];
             
             for (let i = 0; i < days.length; i++) {
-      
-              // let cbDate = mm({                               // callback query do dia
-              //   year: date.year(),
-              //   month: date.month(),
-              //   day: days[i]
-              // });
               
               let button = {
                 text: ''+days[i],
                 callback_data: ''
-                // callback_data: days[i] === '-' ? ''+days[i] : '+'+cbDate.format()
               };
 
               if (days[i] === '-') {
                 button.callback_data = ''+days[i];
               } else {
-                button.callback_data = '+'+mm({           // callback query do dia
+                /* callback query do dia */
+                button.callback_data = '+'+mm({
                   year: date.year(),
                   month: date.month(),
                   day: days[i]
-                }).format('YYYY-MM-DD');                  // padrao callbackQuery +YYYY-MM-DD
+                }).format('YYYY-MM-DD');
               }
       
               buttons.push(button);
       
-              if (i >= weekCount) {                       // limita a 7 colunas
-                keyBoard.push(buttons);                   // adiciona terceira até a oitava linha
+              if (i >= weekCount) {
+                /* limita a 7 colunas */
+                keyBoard.push(buttons);
+
+                /* adiciona terceira até a oitava linha */
                 weekCount += 7;
                 buttons = [];
               }
@@ -144,15 +150,14 @@ class App {
               result: keyBoard
             });
           } catch (err) {
-            logger.error('Erro ao montar botoes > mountKeyboardCalendar: '+err);
+            logger.error('App > mountKeyboardCalendar -> Erro ao montar botoes: '+err);
             reject({ ok: false });
           }
         }
       }).catch(err => {
-        logger.error('Erro ao montar botoes > mountKeyboardCalendar: '+err);
+        logger.error('App > mountKeyboardCalendar -> Erro ao montar botoes: '+err);
         reject({ ok: false });
       });
-  
     });
   }
   
@@ -160,13 +165,17 @@ class App {
    * Retorna array com os botoes dos dias (titulos e callbacks)
    * @param {number} month - mes do calendario exibido
    */
-  _getDayButtons(month) {                                 // retorna estrutura com os dias do mês
+  _getDayButtons(month) {
     return new Promise((resolve, reject) => {
       try {      
         let days = Array(42);
         days.fill('-');
-        let dm = mm({ month: month }).daysInMonth();          // quantidade de dias do mes
-        let wd = mm({ month: month, day: 1}).weekday();      // primeiro dia da semana
+
+        /* quantidade de dias do mes */
+        let dm = mm({ month: month }).daysInMonth();
+
+        /* primeiro dia da semana */
+        let wd = mm({ month: month, day: 1}).weekday();
     
         for (let i = 1; i <= dm; i++) {
           days[wd] = i;
@@ -218,7 +227,7 @@ class App {
           reject({ ok: false });
         }
       }).catch(err => {
-        logger.error('Erro ao gerar teclado com registros > mountKeyboardRegs: '+JSON.stringify(err));
+        logger.error('App > mountKeyboardRegs -> Erro ao gerar teclado com registros: '+JSON.stringify(err));
         reject({ ok: false });
       });    
     });
@@ -231,8 +240,8 @@ class App {
    */
   addReg(typeReg, newTime) {
     return new Promise((resolve, reject) => {
-      if (this.user == null) {                              // verifica usuario
-        logger.error('addReg Usuario não sincronizado > addReg');
+      if (this.user == null) {
+        logger.error('App > addReg -> Usuario não sincronizado');
         reject({ok: false});
       } else {
         // TODO validacao do typeReg
@@ -247,6 +256,7 @@ class App {
             reject({ ok: false });
           }
         }).catch(err => {
+          logger.error('App > addReg -> Erro ao atualizar o ponto(_updateReg): '+err);
           reject({ ok: false });
         });
       }
@@ -300,7 +310,6 @@ class App {
       /* TODO validar as pesquisas */
       this._getReg(date).then(res => {
         if (res.ok) {
-          // let data = res.result;
           let rUpdated = {
             r1: res.result.r1 > 0 ? mm(res.result.r1).format('HH:mm') : '  -  ',
             r2: res.result.r2 > 0 ? mm(res.result.r2).format('HH:mm') : '  -  ',
@@ -315,7 +324,7 @@ class App {
           reject({ ok: false });
         }
       }).catch(err => {
-        logger.error('Erro carregar ponto > listDayReg: '+JSON.stringify(err));
+        logger.error('App > listDayReg -> Erro carregar ponto: '+JSON.stringify(err));
         reject({ ok: false });
       });
     });
@@ -328,7 +337,8 @@ class App {
    */
   _updateReg(typeReg, dateTime) {
 
-    let fileName = this.config.userRegsLocal              // endereco com os registro do usuario
+    /* endereco com os registro do usuario */
+    let fileName = this.config.userRegsLocal
       +this.user.id+'.json';
 
     return new Promise((resolve, reject) => {
@@ -337,22 +347,22 @@ class App {
         try {
           const year  = mm(dateTime).year();
           const month = mm(dateTime).month();
-          const day   = mm(dateTime).date()-1;                // array apartir de 0
+          const day   = mm(dateTime).date()-1;            // array apartir de 0
           let rUpdated = { r1: 0, r2: 0, r3: 0, r4: 0 };
 
-          for (let i = 0; i < data.length; i++) {           // conjunto de registros por ano
-            if(data[i].y == year){                          // registro do ano
+          for (let i = 0; i < data.length; i++) {         // conjunto de registros por ano
+            if(data[i].y == year){                        // registro do ano
               if (typeReg == 1) {                           
-                data[i].m[month].d[day].r.r1 = dateTime;    // comeco jornada 
+                data[i].m[month].d[day].r.r1 = dateTime;  // comeco jornada 
               }
               if (typeReg == 2) {
-                data[i].m[month].d[day].r.r2 = dateTime;    // comeco almoco
+                data[i].m[month].d[day].r.r2 = dateTime;  // comeco almoco
               }
               if (typeReg == 3) {
-                data[i].m[month].d[day].r.r3 = dateTime;    // fim almoco 
+                data[i].m[month].d[day].r.r3 = dateTime;  // fim almoco 
               }
               if (typeReg == 4) {
-                data[i].m[month].d[day].r.r4 = dateTime;    // fim jornada
+                data[i].m[month].d[day].r.r4 = dateTime;  // fim jornada
               }
               rUpdated = data[i].m[month].d[day].r;
             }
@@ -371,16 +381,16 @@ class App {
               reject({ ok: false });
             }
           }).catch(err => {
-            logger.error('Erro ao salvar registro de ponto > updateReg: '+err);
+            logger.error('App > updateReg -> Erro ao salvar registro de ponto: '+err);
             reject({ ok: false });
           });
 
         } catch (err) {
-          logger.error('Erro ao registrar ponto > updateReg: '+err);
+          logger.error('App > updateReg -> Erro ao registrar ponto: '+err);
           reject({ ok: false });
         }
       }).catch(err => {
-        logger.error('Erro ao ler ponto > updateReg: '+err);
+        logger.error('App > updateReg -> Erro ao ler ponto: '+err);
         reject({ ok: false });
       });
     });
@@ -393,8 +403,8 @@ class App {
   _getReg(dateTime) {
     return new Promise((resolve, reject) => {
 
-      if (this.user == null) {                            // verifica usuario
-        logger.error('getReg Ususario não sincronizado > getReg');
+      if (this.user == null) {
+        logger.error('App > getReg -> Ususario não sincronizado');
         reject({ ok: false });
       }
 
@@ -424,11 +434,11 @@ class App {
             }
           }
         } catch(err) {
-          logger.error('Erro ao recuperar registros > getReg: '+err);
+          logger.error('App > getReg -> Erro ao recuperar registros: '+err);
           reject({ ok: false });
         }
       }).catch(err => {
-        logger.error('Erro ao ler registros > getReg: '+err);
+        logger.error('App > getReg -> Erro ao ler registros: '+err);
         reject({ ok: false });
       });
     });
@@ -443,7 +453,6 @@ class App {
   _addDate(worksheet, address, date) {
     
     /* Adiciona datas na primeira coluna */
-  
     let cell = {
       t:'s',
       v: date
@@ -470,22 +479,18 @@ class App {
   _addTime(worksheet, address, time) {
     
     /* Adiciona tempo nas celulas */
-  
     let h = mm(time).hours();
     let m = mm(time).minutes();
     let f = mm(time).format('HH:mm');
-    // for (let i = 0; i < h; i++){
-    //   m = m + 60; // por hora
-    // }
-    // m = m/1440; // min 24 horas
   
     let cell = {
-      t:'s',                                              // s = number format
+      t:'s',    // s = number format
       // v: m,
       v: f
     };
     
-    worksheet[address] = cell;                            // adiciona na celula
+    /* adiciona na celula */
+    worksheet[address] = cell;
   
     let range = xlsx.utils.decode_range(worksheet['!ref']);
     let addr = xlsx.utils.decode_cell(address);
@@ -525,7 +530,7 @@ class App {
                   reg: objMonth.d[l].r
                 });
               } catch (err) {
-                logger.error('Erro ao ler registros > _processFileToExport: '+err);
+                logger.error('App > _processFileToExport -> Erro ao ler registros: '+err);
                 reject({ ok: false });
               }
             }
@@ -537,7 +542,7 @@ class App {
           result: regsObj
         });
       } catch (err) {
-        logger.error('Erro ao processar exportação > _processFileToExport: '+err);
+        logger.error('App > _processFileToExport -> Erro ao processar exportação: '+err);
         reject({ ok: false });
       }
     });
@@ -548,7 +553,7 @@ class App {
     return new Promise((resolve, reject) => {
 
       if(this.user == null) {                             // verifica usuario
-        logger.info('Usuario não sincronizado > export');
+        logger.info('App > export -> Usuario não sincronizado');
         reject({ ok: false });
       }
 
@@ -570,7 +575,7 @@ class App {
             if (existsFile(modelFileName)) {
               file = xlsx.readFile(modelFileName);        // excel base
             } else {
-              logger.error('xlsx base não encontrado > export');
+              logger.error('App > export -> xlsx base não encontrado');
               reject({ ok: false });
             }
 
@@ -592,29 +597,29 @@ class App {
                       result: res.result
                     });
                   } else {
-                    logger.error('Erro ao ler arquivo de exportação > export: '+err);
+                    logger.error('App > export -> Erro ao ler arquivo de exportação: '+err);
                     reject({ ok: false });
                   }
                 }).catch(err => {
-                  logger.error('Erro ao ler arquivo de exportação > export: '+err);
+                  logger.error('App > export -> Erro ao ler arquivo de exportação: '+err);
                   reject({ ok: false });
                 });
               });
 
             } catch (err) {
-              logger.error('Erro ao gerar arquivo de exportação > export: '+err);
+              logger.error('App > export -> Erro ao gerar arquivo de exportação: '+err);
               reject({ ok: false });
             }
           } else {
-            logger.error('ok false > export: '+err);
+            logger.error('App > export -> ok false: '+err);
             reject({ ok: false });
           }
         }).catch(err => {
-          logger.error('Erro ao processar exportação > export: '+err);
+          logger.error('App > export -> Erro ao processar exportação: '+err);
           reject({ ok: false });
         });
       }).catch(err => {
-        logger.error('Erro ao gerar exportação > export: '+err)
+        logger.error('App > export -> Erro ao gerar exportação: '+err)
         reject({ ok: false });
       });
     });

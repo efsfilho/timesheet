@@ -7,18 +7,17 @@ const { existsFile, saveJSON, readJSON } = require('./utils.js');
 class User {
 
   /**
-   * @param {object} userData - usuario
+   * @param {Object} userData - usuario
    * @param {number} userData.id - id do contato
    * @param {string} userData.username - username do contato
    * @param {number} userData.name - nomde do contato
    * @param {boolean} userData.bot - bot
    * @param {number} userData.date - data do chat
-   * @param {object} config - dados dos diretorios
+   * @param {Object} config - dados dos diretorios
    * @param {string} config.userIndexLocal - arquivo com usuarios
    * @param {string} config.userRegsLocal - arquivo registros
    */
   constructor(userData, config) {
-    
     if (!this._validateUser(userData)) throw Error('Objeto usuário inválido');
     this.user = userData;
     this.userIndexLocal = config.userIndexLocal;          // local do arquivo com os usuarios
@@ -28,21 +27,26 @@ class User {
     return this.user;
   }
 
-  /** Valida as propriedades do objeto Usuario */
-  _validateUser(obj) {
+  /** Valida as propriedades do objeto Usuario 
+   * @param {Object} usrObj - usuario
+   * @return {boolean}
+   */
+  _validateUser(usrObj) {
     /* TODO validar os tipos */
-    return ['id', 'username', 'name', 'bot', 'date'].every(el => obj.hasOwnProperty(el));
+    return ['id', 'username', 'name', 'bot', 'date'].every(el => usrObj.hasOwnProperty(el));
   }
 
   /** Verifica a existencia do usuario */
   _checkUser() {
     const user = this.user;
 
+    /* arquivo com id dos usuarios */
     const usersFileName = this.userIndexLocal
-      +this.userIndexFilneName;                           // arquivo com id dos usuarios
+      +this.userIndexFilneName;
 
+    /* nome do arquivo recebe o id do usuario */
     const regFileName = this.userRegsLocal
-      +user.id+'.json';                              // nome do arquivo recebe o id do usuario
+      +user.id+'.json';
 
     if (existsFile(usersFileName)) {
 
@@ -50,39 +54,47 @@ class User {
         try {
           let obj = data
           let userExists = obj.filter(usr => usr.id == user.id ).length > 0;
+
           if (!userExists) {
-            obj.push(user);                          // adiciona o usuario aos outros existentes
-            saveJSON(usersFileName, obj);                 // sobrescreve arquivo usuarios
-            logger.debug(JSON.stringify(user));
-            logger.info('User adicionado: userId: '+user.id+' - '+user.username);
+            /* adiciona o usuario aos outros existentes */
+            obj.push(user);
+            /* sobrescreve arquivo usuarios */
+            saveJSON(usersFileName, obj);
+            // logger.debug(JSON.stringify(user));
+            logger.info('Usuário adicionado: '+JSON.stringify(user));
           }
         } catch (err) {
-          logger.error('Erro ao adicionar o usuario > checkUser: '+err);
+          logger.error('User > checkUser -> Erro ao adicionar o usuario: '+err);
         }
-      }).catch(err => logger.error('Erro ao carregar usuarios > checkUser: '+err));
+      }).catch(err => logger.error('User > checkUser -> Erro ao carregar usuarios: '+err));
       
     } else {
       try {
-        saveJSON(usersFileName, [user]);             // cria arquivo com o primeiro usuario
+        /* cria arquivo com o primeiro usuario */
+        saveJSON(usersFileName, [user]);
         logger.info('Arquivo '+usersFileName+' criado.');
-        logger.info('User adicionado: userId: '+user.id+' - '+user.username);
+        logger.info('Usuario adicionado: '+JSON.stringify(user));
       } catch (err) {
-        logger.error('Erro ao criar o arquivo '+usersFileName+' > checkUser: '+err);
+        logger.error('User > checkUser -> Erro ao criar o arquivo '+usersFileName+': '+err);
       }
     }
     
-    if(!existsFile(regFileName)) {                        // verifica arquivo com registros do usuario
+    /* verifica arquivo com registros do usuario */
+    if(!existsFile(regFileName)) {
       try {
         let reg = this._getDefaultStructure();
         saveJSON(regFileName, reg);
         logger.info('Arquivo '+regFileName+' criado.');
       } catch (err) {
-        logger.error('Erro ao criar o arquivo '+regFileName+' > checkUser: '+err);
+        logger.error('User > checkUser -> Erro ao criar o arquivo '+regFileName+': '+err);
       }
     }
   }
 
-  /** Retorna estrutura do arquivo de pontos */
+  /**
+   * Retorna estrutura do arquivo de pontos
+   * @returns {Array.<{y: string, c: string, m: Array}>} - regStructure
+   */
   _getDefaultStructure() {
 
     let months = [];
