@@ -40,7 +40,7 @@ class App {
   }
   
   /**
-   * Registra o usuario para outras operacoes
+   * Atualiza os dados do usuario pra uso da classe
    * @param {object} userObj - usuario
    * @param {number} userObj.id - id do contato
    * @param {string} userObj.username - username do contato
@@ -49,11 +49,23 @@ class App {
    * @param {number} userObj.date - data do chat
    */
   syncUser(userObj) {
+    this.user = userObj;
+  }
+
+  /**
+   * Cria estrutura de dados do novo usuario
+   * @param {object} userObj - usuario
+   * @param {number} userObj.id - id do contato
+   * @param {string} userObj.username - username do contato
+   * @param {number} userObj.name - nomde do contato
+   * @param {boolean} userObj.bot
+   * @param {number} userObj.date - data do chat
+   */
+  createUser(userObj) {
     try {
       this.user = new User(userObj, this.config);
     } catch (err) {
-      this.user = null;
-      logger.error('App > syncUser -> Erro ao sincronizar usuario: '+err);
+      logger.error('App > createUser -> Erro ao sincronizar usuario: '+err);
     }
   }
 

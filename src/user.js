@@ -23,7 +23,10 @@ class User {
     this.userIndexLocal = config.userIndexLocal;          // local do arquivo com os usuarios
     this.userRegsLocal = config.userRegsLocal;            // local dos registros
     this.userIndexFilneName = 'user.json';                // arquivo com os usuarios
+
+    /* cria arquivos de registro de usuarios novos */
     this._checkUser();
+    
     return this.user;
   }
 
@@ -44,7 +47,7 @@ class User {
     const usersFileName = this.userIndexLocal
       +this.userIndexFilneName;
 
-    /* nome do arquivo recebe o id do usuario */
+    /* nome do arquivo dos pontos do usuario */
     const regFileName = this.userRegsLocal
       +user.id+'.json';
 

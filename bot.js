@@ -9,6 +9,7 @@ const mm = require('moment');
 mm.locale('pt-BR');
 
 const key = '';
+
 const bot = new Ntba(key, { polling: true });
 const app = new App(config);
 
@@ -41,6 +42,9 @@ class Bot {
     this._startListeners();
     this._errorHandlingListeners();
     this._shortcutMode = false;
+
+    /* usuarios da sessao */
+    this.users = new Array();
   }
 
   /** Listeners principais */
@@ -48,9 +52,17 @@ class Bot {
     
     /* Listener que sincroniza o usuario */
     bot.on('message', msg => {
-      if (app.user == null) {
-        let user = this._getUser(msg);
-        app.syncUser(user); /* TODO Teste com mais de um usuario*/
+      
+      let user = this._getUser(msg);
+      app.syncUser(user);
+   
+      if (!this.users.find(usr => usr.id == user.id)) {
+
+        /* registra e cria estrutura dos dados de usuarios novos */
+        app.createUser(user);
+        this.users.push(user);
+        
+        logger.debug('added '+JSON.stringify(user))
       }
     });
 
@@ -78,19 +90,24 @@ class Bot {
     try {
       if (!msg.from.is_bot) {
         user.id = msg.from.id;
-        user.username = msg.from.username;
-        user.name = msg.from.first_name+' '+msg.from.last_name;
+        user.username = msg.from.username || '';
+        user.name = msg.from.first_name+' '+(msg.from.last_name || '');
         user.bot = false;
         user.date = msg.date;
       }
     } catch (err) {
       logger.error('Bot > _getUser -> Erro ao carregar estruturado usuario: '+err);
+      return null;
     }
     return user;
   }
 
   /** Listeners dos comandos */
   _startListeners() {
+
+    bot.onText(/usr/, msg => {
+      console.log(this.users);
+    });
 
     /* Listener para comeco de jornada */
     bot.onText(CMD_P1, msg => {
