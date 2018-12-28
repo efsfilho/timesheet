@@ -30,7 +30,7 @@ class Utils {
           reject(err);
         } else {
           /* TODO resolve/reject fora do padrao */
-          data.length > 0 ? resolve(JSON.parse(data)) : reject(new Error('JSON vazio'));
+          data.length > 0 ? resolve(JSON.parse(data)) : reject(new Error('Arquivo '+fileName+' inválido.'));
         }
       });
     });

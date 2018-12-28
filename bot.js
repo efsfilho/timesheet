@@ -9,19 +9,19 @@ const mm = require('moment');
 mm.locale('pt-BR');
 
 const key = '';
-
 const bot = new Ntba(key, { polling: true });
-const app = new App(config);
 
-const CMD_START = /\/start/;
-const CMD_P1 = /^\/c1\b|^Come\ço\sde\sjornada\b/;         // /c1  - comando para registro de comeco de jornada
-const CMD_P2 = /^\/c2\b|^Almo\ço\b/;                      // /c2  - ' ' registro de almoco
-const CMD_P3 = /^\/c3\b|^Volta\sdo\salmo\ço\b/;           // /c3  - ' ' registro de volta de almoco
-const CMD_P4 = /^\/c4\b|^Fim\sde\sjornada\b/;             // /c4  - ' ' registro de fim de jornada
-const CMD_SHORTCUT = /\/atalho/;                          // /atalho
-const CMD_EDIT = /\/editar\b|^Editar\spontos\b/;
-const CMD_EXPT = /\/^exp\b/;                                // comando para exportar excel
-const CMD_LIST = /\/list/;                                // /list - listar pontos do dia
+const CMD = {
+  START: /\/start/,
+  P1: /^\/c1\b|^Começo\sde\sjornada\b/,   // /c1  - comando para registro de comeco de jornada
+  P2: /^\/c2\b|^Almoço\b/,                // /c2  - ' ' registro de almoco
+  P3: /^\/c3\b|^Volta\sdo\salmoço\b/,     // /c3  - ' ' registro de volta de almoco
+  P4: /^\/c4\b|^Fim\sde\sjornada\b/,      // /c4  - ' ' registro de fim de jornada
+  SHORTCUT: /\/atalho/,                   // /atalho
+  EDIT: /\/editar\b|^Editar\spontos\b/,
+  EXPT: /\/^exp\b/,                       // comando para exportar excel
+  LIST: /\/list/                          // /list - listar pontos do dia
+};
 
 bot.onText(/eco/, msg => {
   logger.debug('eco');
@@ -32,42 +32,30 @@ bot.onText(/eco/, msg => {
 class Bot {
 
   constructor() {
-    /*
-      _mainListener inicia listener que sincroniza usuario
-      _startListeners inicia listeners de comandos
-      _errorHandlingListeners listeners de erro
-      _shortcutMode flag de modo atalho
-    */
+    this._app = new App(config);
+    this._app.init();
+    /* inicia listener que sincroniza usuario */
     this._mainListener();
+    /* inicia listeners de comandos */
     this._startListeners();
+    /*  listeners de erro */
     this._errorHandlingListeners();
+    /* flag de modo atalho */
     this._shortcutMode = false;
-
     /* usuarios da sessao */
-    this.users = new Array();
+    this.users = [];
   }
 
   /** Listeners principais */
   _mainListener() {
-    
+    bot.onText(/usr/, () => console.log(this._app._users));
     /* Listener que sincroniza o usuario */
     bot.on('message', msg => {
-      
-      let user = this._getUser(msg);
-      app.syncUser(user);
-   
-      if (!this.users.find(usr => usr.id == user.id)) {
-
-        /* registra e cria estrutura dos dados de usuarios novos */
-        app.createUser(user);
-        this.users.push(user);
-        
-        logger.debug('added '+JSON.stringify(user))
-      }
+      this._app.setUser(this._getUser(msg));
     });
 
     /* Listener start commando */
-    bot.onText(CMD_START, msg => {
+    bot.onText(CMD.START, msg => {
       const chatId = msg.chat.id;
       bot.sendMessage(chatId, 'Bem vindo');
     });
@@ -76,9 +64,9 @@ class Bot {
   /**
    * Retorna dados do usuario do telegram
    * @param {object} msg - informacoes do chat e do usuario do telegram
-   * @returns {object} - objeto usuario para ser sincronizado com app.syncUser
+   * @returns {object} - objeto usuario para ser sincronizado com this._app.syncUser
    */
-  _getUser(msg) {                                         // objeto usuario
+  _getUser(msg) {
     let user = {
       id: 0,
       username: '',
@@ -105,14 +93,10 @@ class Bot {
   /** Listeners dos comandos */
   _startListeners() {
 
-    bot.onText(/usr/, msg => {
-      console.log(this.users);
-    });
-
     /* Listener para comeco de jornada */
-    bot.onText(CMD_P1, msg => {
+    bot.onText(CMD.P1, msg => {
       const chatId = msg.chat.id;
-      app.addReg(1, msg.date).then(res => {
+      this._app.addReg(1, msg.date).then(res => {
 
         if (res.ok) {
           let replyMsg = this._defaultMessageUpdateReg(res.result, 1, msg.date);
@@ -127,9 +111,9 @@ class Bot {
     });
 
     /* Listener saida para almoco */
-    bot.onText(CMD_P2, msg => {
+    bot.onText(CMD.P2, msg => {
       const chatId = msg.chat.id;
-      app.addReg(2, msg.date).then(res => {
+      this._app.addReg(2, msg.date).then(res => {
         if (res.ok) {
           let replyMsg = this._defaultMessageUpdateReg(res.result, 2, msg.date);
           bot.sendMessage(chatId, replyMsg);
@@ -143,9 +127,9 @@ class Bot {
     });
 
     /* Listener para chegada do almoco */
-    bot.onText(CMD_P3, msg => {
+    bot.onText(CMD.P3, msg => {
       const chatId = msg.chat.id;
-      app.addReg(3, msg.date).then(res => {
+      this._app.addReg(3, msg.date).then(res => {
         if (res.ok) {
           let replyMsg = this._defaultMessageUpdateReg(res.result, 3, msg.date);
           bot.sendMessage(chatId, replyMsg);
@@ -159,9 +143,9 @@ class Bot {
     });
     
     /* Listener para fim de jornada */
-    bot.onText(CMD_P4, msg => {
+    bot.onText(CMD.P4, msg => {
       const chatId = msg.chat.id;
-      app.addReg(4, msg.date).then(res => {
+      this._app.addReg(4, msg.date).then(res => {
         if (res.ok) {
           let replyMsg = this._defaultMessageUpdateReg(res.result, 4, msg.date);
           bot.sendMessage(chatId, replyMsg);
@@ -175,7 +159,7 @@ class Bot {
     });
 
     /* Listener para mudar teclado (lista de comando/botoes ) */
-    bot.onText(CMD_SHORTCUT, msg => {
+    bot.onText(CMD.SHORTCUT, msg => {
       const chatId = msg.chat.id;
       if (!this._shortcutMode) {
         this._shortcutMode = true;
@@ -202,7 +186,7 @@ class Bot {
     });
 
     /* Listener botoes editar pontos */
-    bot.onText(CMD_EDIT, msg => {
+    bot.onText(CMD.EDIT, msg => {
       const date = mm(msg.chat.time);
       const strDate = date.format('YYYY-MM-DD');
       const opts = {
@@ -210,7 +194,7 @@ class Bot {
         message_id: msg.message_id
       }
 
-      app.mountKeyboardRegs(strDate).then(res => {
+      this._app.mountKeyboardRegs(strDate).then(res => {
         if (res.ok) {
           let inlineKb = res.result.inline_keyboard[0].slice();
           inlineKb.push({ text: 'Pontos', callback_data: '*'+date.format('YYYY-MM') });
@@ -232,11 +216,11 @@ class Bot {
     });
 
     /* Listener exibe registros do dia */
-    bot.onText(CMD_LIST, msg => {
+    bot.onText(CMD.LIST, msg => {
       const chatId = msg.chat.id;
       const date = mm(msg.chat.time);
 
-      app.listDayReg(date.format('YYYY-MM-DD')).then(res => {
+      this._app.listDayReg(date.format('YYYY-MM-DD')).then(res => {
         if (res.ok) {
           let r = {
             r1: res.result.r1,
@@ -296,14 +280,14 @@ class Bot {
     });
 
     /* Listener com comando para exportar folha */
-    bot.onText(CMD_EXPT, msg => {
+    bot.onText(CMD.EXPT, msg => {
       const chatId = msg.chat.id;
-      app.export().then(res => {
+      this._app.export().then(res => {
         if (res.ok) {
           const fileName = mm(msg.date*1000).format('DDMMYYYYHHmmss')+'.xlsx';
           bot.sendDocument(chatId, res.result, {}, { 
             filename: fileName,
-            contentType: 'application/octet-stream'
+            contentType: 'this._application/octet-stream'
             /* https://github.com/yagop/node-telegram-bot-api/blob/master/doc/usage.md#sending-files */
           });
         } else {
@@ -326,7 +310,7 @@ class Bot {
    */
   _callbackQueryUpdateKeyBoardCalendar(cbQueryData, opts) {
     let srtDate = cbQueryData.replace(/<|>/g, '');        // remove char verificador
-    app.mountKeyboardCalendar(mm(srtDate)).then(res => {
+    this._app.mountKeyboardCalendar(mm(srtDate)).then(res => {
       if (res.ok) {
         bot.editMessageReplyMarkup({
           inline_keyboard: res.result
@@ -351,7 +335,7 @@ class Bot {
   _callbackQueryKeyBoardRegs(cbQueryData, date, opts) {
     let strDate = cbQueryData.replace(/\+/, '');
     /* TODO fazer uma validacao decente */
-    return app.mountKeyboardRegs(strDate).then(res => {
+    return this._app.mountKeyboardRegs(strDate).then(res => {
       if (res.ok) {
 
         let cbCalendar = '*'+mm(date*1000).format('YYYY-MM')
@@ -407,7 +391,7 @@ class Bot {
       }
 
       if (/[0-1][0-9]\:?[0-5][0-9]|[2][0-3]\:?[0-5][0-9]/.exec(strNewTime) !== null) {
-        app.updateReg(date.format('YYYY-MM-DD'), typeReg, strNewTime).then(res => {
+        this._app.updateReg(date.format('YYYY-MM-DD'), typeReg, strNewTime).then(res => {
 
           if (res.ok) {
             let r = {
@@ -449,7 +433,7 @@ class Bot {
    */
   _callbackQueryKeyBoardCalendar(cbQueryData, opts) {
     let srtDate = cbQueryData.replace(/\*/, '');          // remove char verificador
-    app.mountKeyboardCalendar(mm(srtDate)).then(res => {
+    this._app.mountKeyboardCalendar(mm(srtDate)).then(res => {
       if (res.ok) {
         bot.editMessageText('Pontos', opts).then(() => {
           bot.editMessageReplyMarkup({ inline_keyboard: res.result }, opts);
@@ -525,15 +509,15 @@ class Bot {
       https://github.com/yagop/node-telegram-bot-api/issues/113
     */
     try {
-      bot.removeTextListener(CMD_P1);
-      bot.removeTextListener(CMD_P2);
-      bot.removeTextListener(CMD_P3);
-      bot.removeTextListener(CMD_P4);
-      bot.removeTextListener(CMD_SHORTCUT);
-      bot.removeTextListener(CMD_EDIT);
+      bot.removeTextListener(CMD.P1);
+      bot.removeTextListener(CMD.P2);
+      bot.removeTextListener(CMD.P3);
+      bot.removeTextListener(CMD.P4);
+      bot.removeTextListener(CMD.SHORTCUT);
+      bot.removeTextListener(CMD.EDIT);
       bot.removeListener('callback_query');
-      bot.removeTextListener(CMD_EXPT);
-      bot.removeTextListener(CMD_LIST);
+      bot.removeTextListener(CMD.EXPT);
+      bot.removeTextListener(CMD.LIST);
     } catch (err) {
       logger.error('Bot > _stopListener -> Erro ao desativar listeners : '+err);
     }

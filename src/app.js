@@ -1,12 +1,12 @@
 const mm = require('moment');
 const xlsx = require('xlsx');
 
-const User = require('./user');
+const Users = require('./users');
 const logger = require('./logger');
 
 const { existsFile, saveJSON, readJSON, checkDir, readFile } = require('./utils');
 
-const modelFileName = './src/file.xlsx'; // excel fonte para exportaçao 
+// const modelFileName = './src/file.xlsx'; // excel fonte para exportaçao 
 
 /** App */
 class App {
@@ -16,29 +16,28 @@ class App {
    * @param {object} config - locais dos diretorios
    */
   constructor(config) {
-    this.config = config;
-    this.user = null;
-    this._checkDirectories();
+    this._config = config;
+    this._user = null;
+    this._users = new Users(config);
   }
 
-  /** Garante a existencia dos diretorios padrao  */
-  _checkDirectories() {
+  init() {
     try {
-      /*
-        config.logLocal        local do log
-        config.userIndexLocal  local do arquivo do usuario
-        config.userRegsLocal   local dos registros do usuario
-        config.exportLocal     local temporario dos arquivos para exportacao
-      */
-      checkDir(this.config.logLocal);
-      checkDir(this.config.userIndexLocal);
-      checkDir(this.config.userRegsLocal);
-      checkDir(this.config.exportLocal);
+      /* local dos logs */
+      checkDir(this._config.logLocal);
+      /* local do arquivo do usuario */
+      checkDir(this._config.userIndexLocal);
+      /* local dos registros do usuario */
+      checkDir(this._config.userRegsLocal);
+      /* local temporario dos arquivos para exportacao */
+      checkDir(this._config.exportLocal);
     } catch (err) {
-      logger.error('App > checkDirectories -> Diretorios padrão não criados: '+err);
+      logger.error('App > init -> Diretorios padrão não criados: '+err);
     }
+    /* Carrega usuarios que ja registrados */
+    this._users.loadUsers();
   }
-  
+
   /**
    * Atualiza os dados do usuario pra uso da classe
    * @param {object} userObj - usuario
@@ -48,25 +47,21 @@ class App {
    * @param {boolean} userObj.bot
    * @param {number} userObj.date - data do chat
    */
-  syncUser(userObj) {
-    this.user = userObj;
+  setUser(userObj) {
+    try {
+      this._user = userObj;
+      this._users.checkUser(userObj);
+    } catch(err) {
+      logger.error('App > setUser -> Erro ao verificar usuário: '+err);
+    }
   }
 
   /**
-   * Cria estrutura de dados do novo usuario
-   * @param {object} userObj - usuario
-   * @param {number} userObj.id - id do contato
-   * @param {string} userObj.username - username do contato
-   * @param {number} userObj.name - nomde do contato
-   * @param {boolean} userObj.bot
-   * @param {number} userObj.date - data do chat
+   * Usuarios
+   * @return {Array}
    */
-  createUser(userObj) {
-    try {
-      this.user = new User(userObj, this.config);
-    } catch (err) {
-      logger.error('App > createUser -> Erro ao sincronizar usuario: '+err);
-    }
+  getUsers() {
+    return this._users;
   }
 
   /**
@@ -252,7 +247,7 @@ class App {
    */
   addReg(typeReg, newTime) {
     return new Promise((resolve, reject) => {
-      if (this.user == null) {
+      if (this._user == null) {
         logger.error('App > addReg -> Usuario não sincronizado');
         reject({ok: false});
       } else {
@@ -350,8 +345,8 @@ class App {
   _updateReg(typeReg, dateTime) {
 
     /* endereco com os registro do usuario */
-    let fileName = this.config.userRegsLocal
-      +this.user.id+'.json';
+    let fileName = this._config.userRegsLocal
+      +this._user.id+'.json';
 
     return new Promise((resolve, reject) => {
       readJSON(fileName).then(data => {
@@ -415,13 +410,13 @@ class App {
   _getReg(dateTime) {
     return new Promise((resolve, reject) => {
 
-      if (this.user == null) {
+      if (this._user == null) {
         logger.error('App > getReg -> Ususario não sincronizado');
         reject({ ok: false });
       }
 
-      let userRegsFileName = this.config.userRegsLocal
-        +this.user.id+'.json';
+      let userRegsFileName = this._config.userRegsLocal
+        +this._user.id+'.json';
       
       readJSON(userRegsFileName).then(data => {
 
@@ -564,16 +559,16 @@ class App {
   export() {
     return new Promise((resolve, reject) => {
 
-      if(this.user == null) {                             // verifica usuario
+      if(this._user == null) {                             // verifica usuario
         logger.info('App > export -> Usuario não sincronizado');
         reject({ ok: false });
       }
 
-      const baseFileName = this.config.userRegsLocal
-          +this.user.id+'.json';                          // registros do usuario
+      const baseFileName = this._config.userRegsLocal
+          +this._user.id+'.json';                          // registros do usuario
 
-      const outFileName = this.config.exportLocal
-          +this.user.id+'.xlsx';                          // arquivo a ser exportado
+      const outFileName = this._config.exportLocal
+          +this._user.id+'.xlsx';                          // arquivo a ser exportado
 
       readJSON(baseFileName).then(data => {
         this._processFileToExport(data).then(res => {     // processa arquivo json
@@ -584,8 +579,8 @@ class App {
             const regs = res.result;
             let file = null;
             
-            if (existsFile(modelFileName)) {
-              file = xlsx.readFile(modelFileName);        // excel base
+            if (existsFile(this._config.exportModelFileName)) {
+              file = xlsx.readFile(this._config.exportModelFileName);        // excel base
             } else {
               logger.error('App > export -> xlsx base não encontrado');
               reject({ ok: false });
