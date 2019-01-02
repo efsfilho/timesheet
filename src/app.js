@@ -28,7 +28,7 @@ class App {
       /* local do arquivo do usuario */
       checkDir(this._config.userIndexLocal);
       /* local dos registros do usuario */
-      checkDir(this._config.userRegsLocal);
+      checkDir(this._config.userRegsLocal);      
       /* local temporario dos arquivos para exportacao */
       checkDir(this._config.exportLocal);
     } catch (err) {
@@ -357,6 +357,37 @@ class App {
           const day   = mm(dateTime).date()-1;            // array apartir de 0
           let rUpdated = { r1: 0, r2: 0, r3: 0, r4: 0 };
 
+          let yearIndex = false;
+
+          for (let i = 0; i < data.length; i++) {
+            if (data[i].y == year) {
+              yearIndex = true;
+            }
+          }
+
+          if (!yearIndex) {
+            let months = [];
+            let days = [];
+            let dayMonth = 0;
+
+            for (let i = 0; i < 12; i++) {
+              dayMonth = mm({ month: i }).daysInMonth();
+
+              for (let l = 1; l <= dayMonth; l++) {
+                days.push({ d: l, r: { r1: 0, r2: 0, r3: 0, r4: 0 } });
+              }
+
+              months.push({ m: mm({month: i}).month(), d: days });
+              days = [];
+            }
+
+            data.push({
+              y: mm().format('YYYY'),  // ano atual
+              c: mm().format(),        // data/hora atual
+              m: months
+            });            
+          }
+          
           for (let i = 0; i < data.length; i++) {         // conjunto de registros por ano
             if(data[i].y == year){                        // registro do ano
               if (typeReg == 1) {                           

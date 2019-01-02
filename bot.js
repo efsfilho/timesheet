@@ -19,7 +19,7 @@ const CMD = {
   P4: /^\/c4\b|^Fim\sde\sjornada\b/,      // /c4  - ' ' registro de fim de jornada
   SHORTCUT: /\/atalho/,                   // /atalho
   EDIT: /\/editar\b|^Editar\spontos\b/,
-  EXPT: /\/^exp\b/,                       // comando para exportar excel
+  EXPT: /\/exp/,                       // comando para exportar excel
   LIST: /\/list/                          // /list - listar pontos do dia
 };
 
