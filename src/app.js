@@ -337,6 +337,54 @@ class App {
     });
   }  
 
+  /** 
+   * Retorna o tempo digitado
+   * @param {string} strTime - HHmm|Hmm|HH:MM|H:MM
+   * @returns {Promise}
+   */
+  getTimeFromString(strTime) {
+    return new Promise((resolve, reject) => {
+
+      /* identifica quantidade de digitos separado ou nao por dois pontos */
+      let rgxd = /^(\d{3}|\d\:\d{2})$|^(\d{4}|\d{2}\:\d{2})$/;
+      /* tempo 3 digitos */
+      let rgx3 = /^[0-9][0-5][0-9]$/;
+      /* tempo 4 digitos */
+      let rgx4 = /^[0-1][0-9][0-5][0-9]|2[0-3][0-5][0-9]$/;
+      
+      let digits = rgxd.exec(strTime);
+      let newTime = null;
+
+      try {
+  
+        if (digits != null && digits.length >= 3) {
+  
+          /* 3 digitos */
+          if (digits[1] !== 'undefined') {
+            newTime = digits[1].replace(':', '');
+            rgx3.exec(newTime) != null ? newTime = '0'+newTime : newTime = null;
+          }
+          /* 4 digitos */
+          if (digits[2] !== 'undefined') {
+            newTime = digits[2].replace(':', '');
+            rgx4.exec(newTime) != null ? '' : newTime = null;
+          }
+        }
+      
+        if (newTime != null) {
+          resolve({
+            ok: true,
+            result: newTime
+          });
+        } else {
+          reject({ ok: false });
+        }
+      } catch (error) {
+        reject({ ok: false });
+      }
+    });
+  }
+
   /**
    * Atualiza ponto
    * @param {number} typeReg - tipo reg (1, 2, 3 ou 4)
