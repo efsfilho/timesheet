@@ -96,66 +96,113 @@ class Bot {
     /* Listener para comeco de jornada */
     bot.onText(CMD.P1, msg => {
       const chatId = msg.chat.id;
-      this._app.addReg(1, msg.date).then(res => {
-
-        if (res.ok) {
-          let replyMsg = this._defaultMessageUpdateReg(res.result, 1, msg.date);
-          bot.sendMessage(chatId, replyMsg);
-        } else {
+      const date = mm(msg.chat.time);
+      let textMsg = msg.text.replace(CMD.P1, '');
+      textMsg = textMsg.replace(CMD.P1, '');
+      textMsg = textMsg.replace(new RegExp(/\s/, 'g'), '');
+      
+      if (textMsg !== '') {
+        let strDate = date.format('YYYY-MM-DD');
+        
+        /* para tempo digitado ex /C1 1010 */
+        this._app.getTimeFromString(textMsg).then(time => {
+          if (time.ok) {
+            let newTime = mm(strDate+' '+time.result);
+            this._commandReg(chatId, 1, newTime.unix());
+          } else {
+            this._defaultMessageError(chatId);
+          }
+        }).catch(err => {
+          logger.error('Bot > _startListeners -> onText(CMD.P1) Erro ao atualizar registro de ponto: '+err);
           this._defaultMessageError(chatId);
-        }
-      }).catch(err => {
-        logger.error('Bot > _startListeners > ontext(CMD_P1) -> Erro ao registrar ponto : '+err);
-        this._defaultMessageError(chatId);
-      })
+        });
+      } else {
+        this._commandReg(chatId, 1, msg.date);
+      }
     });
 
     /* Listener saida para almoco */
     bot.onText(CMD.P2, msg => {
       const chatId = msg.chat.id;
-      this._app.addReg(2, msg.date).then(res => {
-        if (res.ok) {
-          let replyMsg = this._defaultMessageUpdateReg(res.result, 2, msg.date);
-          bot.sendMessage(chatId, replyMsg);
-        } else {
+      const date = mm(msg.chat.time);
+      let textMsg = msg.text.replace(CMD.P2, '');
+      textMsg = textMsg.replace(CMD.P2, '');
+      textMsg = textMsg.replace(new RegExp(/\s/, 'g'), '');
+      
+      if (textMsg !== '') {
+        let strDate = date.format('YYYY-MM-DD');
+        
+        /* para tempo digitado ex /C1 1010 */
+        this._app.getTimeFromString(textMsg).then(time => {
+          if (time.ok) {
+            let newTime = mm(strDate+' '+time.result);
+            this._commandReg(chatId, 2, newTime.unix());
+          } else {
+            this._defaultMessageError(chatId);
+          }
+        }).catch(err => {
+          logger.error('Bot > _startListeners -> onText(CMD.P2) Erro ao atualizar registro de ponto: '+err);
           this._defaultMessageError(chatId);
-        }
-      }).catch(err => {
-        logger.error('Bot > _startListeners > onText(CMD_P2) -> Erro ao registrar ponto: '+err);
-        this._defaultMessageError(chatId);
-      })
+        });
+      } else {
+        this._commandReg(chatId, 2, msg.date);
+      }
     });
 
     /* Listener para chegada do almoco */
     bot.onText(CMD.P3, msg => {
       const chatId = msg.chat.id;
-      this._app.addReg(3, msg.date).then(res => {
-        if (res.ok) {
-          let replyMsg = this._defaultMessageUpdateReg(res.result, 3, msg.date);
-          bot.sendMessage(chatId, replyMsg);
-        } else {
+      const date = mm(msg.chat.time);
+      let textMsg = msg.text.replace(CMD.P3, '');
+      textMsg = textMsg.replace(CMD.P3, '');
+      textMsg = textMsg.replace(new RegExp(/\s/, 'g'), '');
+      
+      if (textMsg !== '') {
+        let strDate = date.format('YYYY-MM-DD');
+        
+        /* para tempo digitado ex /C1 1010 */
+        this._app.getTimeFromString(textMsg).then(time => {
+          if (time.ok) {
+            let newTime = mm(strDate+' '+time.result);
+            this._commandReg(chatId, 3, newTime.unix());
+          } else {
+            this._defaultMessageError(chatId);
+          }
+        }).catch(err => {
+          logger.error('Bot > _startListeners -> onText(CMD.P3) Erro ao atualizar registro de ponto: '+err);
           this._defaultMessageError(chatId);
-        }
-      }).catch(err => {
-        logger.error('Bot > _startListeners > onText(CMD_P3) -> Erro ao registrar ponto: '+err);
-        this._defaultMessageError(chatId);
-      })
+        });
+      } else {
+        this._commandReg(chatId, 3, msg.date);
+      }
     });
     
     /* Listener para fim de jornada */
     bot.onText(CMD.P4, msg => {
       const chatId = msg.chat.id;
-      this._app.addReg(4, msg.date).then(res => {
-        if (res.ok) {
-          let replyMsg = this._defaultMessageUpdateReg(res.result, 4, msg.date);
-          bot.sendMessage(chatId, replyMsg);
-        } else {
+      const date = mm(msg.chat.time);
+      let textMsg = msg.text.replace(CMD.P4, '');
+      textMsg = textMsg.replace(CMD.P4, '');
+      textMsg = textMsg.replace(new RegExp(/\s/, 'g'), '');
+      
+      if (textMsg !== '') {
+        let strDate = date.format('YYYY-MM-DD');
+        
+        /* para tempo digitado ex /C1 1010 */
+        this._app.getTimeFromString(textMsg).then(time => {
+          if (time.ok) {
+            let newTime = mm(strDate+' '+time.result);
+            this._commandReg(chatId, 4, newTime.unix());
+          } else {
+            this._defaultMessageError(chatId);
+          }
+        }).catch(err => {
+          logger.error('Bot > _startListeners -> onText(CMD.P4) Erro ao atualizar registro de ponto: '+err);
           this._defaultMessageError(chatId);
-        }
-      }).catch(err => {
-        logger.error('Bot > _startListeners > onText(CMD_P4) -> Erro ao registrar ponto:  '+err);
-        this._defaultMessageError(chatId);
-      })
+        });
+      } else {
+        this._commandReg(chatId, 4, msg.date);
+      }
     });
 
     /* Listener para mudar teclado (lista de comando/botoes ) */
@@ -301,6 +348,22 @@ class Bot {
     });
   }
 
+
+  _commandReg(chatId, typeReg, newTime) {
+    this._app.addReg(typeReg, newTime).then(res => {
+      if (res.ok) {
+        let replyMsg = this._defaultMessageUpdateReg(res.result, typeReg, newTime);
+        bot.sendMessage(chatId, replyMsg);
+      } else {
+        this._defaultMessageError(chatId);
+      }
+    }).catch(err => {
+      logger.error('Bot > _commandReg -> Erro ao registrar ponto : '+err);
+      this._defaultMessageError(chatId);
+    });
+  }
+
+
   /**
    * Callback do botao avanca/retrocede mes(atualiza calendario)
    * @param {string} cbQueryData - padrao (<,>)YYYY-MM exemplo: <2018-05
@@ -384,43 +447,36 @@ class Bot {
     bot.editMessageText('Digite o novo ponto '+typeMsg[typeReg], opts);
     this._stopListeners();                                // desativa os listeners
     bot.once('message', msg => {                          // listener para pegar o novo ponto digitado 
+      
       let strNewTime = msg.text;
-      /* TODO fazer uma validacao decente */
-      if (/^\d\d\d\d\b/.exec(msg.text) !== null) {
-        strNewTime = msg.text.slice(0,2)+':'+msg.text.slice(2,4);
-      }
-
-      if (/[0-1][0-9]\:?[0-5][0-9]|[2][0-3]\:?[0-5][0-9]/.exec(strNewTime) !== null) {
-        this._app.updateReg(date.format('YYYY-MM-DD'), typeReg, strNewTime).then(res => {
-
-          if (res.ok) {
-            let r = {
-              r1: res.result.r1 > 0 ? mm(res.result.r1).format('HH:mm') : '  -  ',
-              r2: res.result.r2 > 0 ? mm(res.result.r2).format('HH:mm') : '  -  ',
-              r3: res.result.r3 > 0 ? mm(res.result.r3).format('HH:mm') : '  -  ',
-              r4: res.result.r4 > 0 ? mm(res.result.r4).format('HH:mm') : '  -  '
+      let strDate = date.format('YYYY-MM-DD');
+            
+      this._app.getTimeFromString(strNewTime).then(time => {
+        if (time.ok) {
+          const newTime = mm(strDate+' '+time.result);
+          this._app.addReg(typeReg, newTime.unix()).then(res => {
+            if (res.ok) {
+              let replyMsg = this._defaultMessageUpdateReg(res.result, typeReg, msg.date);
+              bot.sendMessage(opts.chat_id, replyMsg);
+            } else {
+              this._defaultMessageError(opts.chat_id);
             }
-
-            let replyMsg = ''+
-              ' Ponto de '+date.format('LL')+' alterado \n'+
-              '  '+r.r1+'  |  '+r.r2+'  |  '+r.r3+'  |  '+r.r4;
-
-            /* TODO callback caso nao ocorra a alteracao*/
-            // bot.sendMessage(opts.chat_id, 'Ponto alterado '+typeMsg[typeReg]+'\n'+date.format('LL'));
-            bot.sendMessage(opts.chat_id, replyMsg);
-          } else {
+            this._startListeners();
+          }).catch(err => {
+            logger.error('Bot > _callbackQueryUpdateReg > Erro ao atualizar ponto : '+err);
+            this._startListeners();
             this._defaultMessageError(opts.chat_id);
-          }
-          this._startListeners();                           // reativa os listesteners apos resposta do usuario
-        }).catch(err => {
-          logger.error('Bot > _callbackQueryUpdateReg -> Erro ao atualizar registro de ponto: '+err);
+          });
+        } else {
+          logger.info('Bot > _callbackQueryUpdateReg -> Tempo não convertido.');
           this._startListeners();                           // reativa os listesteners apos resposta do usuario
           this._defaultMessageError(opts.chat_id);
-        });
-      } else {
-        this._startListeners();   
+        }
+      }).catch(err => {
+        logger.error('Bot > _callbackQueryUpdateReg -> Erro ao atualizar registro de ponto: '+err);
+        this._startListeners();                           // reativa os listesteners apos resposta do usuario
         this._defaultMessageError(opts.chat_id);
-      }
+      });
     })
   }
   

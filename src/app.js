@@ -253,7 +253,7 @@ class App {
       } else {
         // TODO validacao do typeReg
         // TODO validacao do newTime
-        this._updateReg(typeReg, newTime* 1000).then(res => {
+        this._updateReg(typeReg, newTime*1000).then(res => {
           if (res.ok) {
             resolve({
               ok: true,
@@ -339,10 +339,10 @@ class App {
 
   /** 
    * Retorna o tempo digitado
-   * @param {string} strTime - HHmm|Hmm|HH:MM|H:MM
+   * @param {string} strNewTime - HHmm|Hmm|HH:MM|H:MM
    * @returns {Promise}
    */
-  getTimeFromString(strTime) {
+  getTimeFromString(strNewTime) {
     return new Promise((resolve, reject) => {
 
       /* identifica quantidade de digitos separado ou nao por dois pontos */
@@ -352,26 +352,30 @@ class App {
       /* tempo 4 digitos */
       let rgx4 = /^[0-1][0-9][0-5][0-9]|2[0-3][0-5][0-9]$/;
       
-      let digits = rgxd.exec(strTime);
+      let digits = null
+      
+      if (strNewTime != null && (strNewTime.length >= 3 && strNewTime.length <= 5)) {
+        digits = rgxd.exec(strNewTime);
+      }
+
       let newTime = null;
 
       try {
-  
         if (digits != null && digits.length >= 3) {
-  
           /* 3 digitos */
-          if (digits[1] !== 'undefined') {
+          if (typeof(digits[1]) !== 'undefined') {
             newTime = digits[1].replace(':', '');
             rgx3.exec(newTime) != null ? newTime = '0'+newTime : newTime = null;
           }
           /* 4 digitos */
-          if (digits[2] !== 'undefined') {
+          if (typeof(digits[2]) !== 'undefined') {
             newTime = digits[2].replace(':', '');
             rgx4.exec(newTime) != null ? '' : newTime = null;
           }
         }
-      
+
         if (newTime != null) {
+          newTime = newTime.slice(0,2)+':'+newTime.slice(2,4);
           resolve({
             ok: true,
             result: newTime
@@ -379,8 +383,8 @@ class App {
         } else {
           reject({ ok: false });
         }
-      } catch (error) {
-        reject({ ok: false });
+      } catch (err) {
+        reject(err);
       }
     });
   }
