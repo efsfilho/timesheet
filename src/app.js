@@ -296,7 +296,7 @@ class App {
               reject({ ok: false });
             }
           }).catch(err => {
-            // TODO log?
+            logger.debug('App > updateReg -> Erro ao atualizar o registro '+ err);
             reject({ ok: false });
           });
         } else {
@@ -322,7 +322,7 @@ class App {
             r2: res.result.r2 > 0 ? mm(res.result.r2).format('HH:mm') : '  -  ',
             r3: res.result.r3 > 0 ? mm(res.result.r3).format('HH:mm') : '  -  ',
             r4: res.result.r4 > 0 ? mm(res.result.r4).format('HH:mm') : '  -  '
-          }
+          };
           resolve({
             ok: true,
             result: rUpdated
@@ -346,13 +346,13 @@ class App {
     return new Promise((resolve, reject) => {
 
       /* identifica quantidade de digitos separado ou nao por dois pontos */
-      let rgxd = /^(\d{3}|\d\:\d{2})$|^(\d{4}|\d{2}\:\d{2})$/;
+      let rgxd = /^(\d{3}|\d:\d{2})$|^(\d{4}|\d{2}:\d{2})$/;
       /* tempo 3 digitos */
       let rgx3 = /^[0-9][0-5][0-9]$/;
       /* tempo 4 digitos */
       let rgx4 = /^[0-1][0-9][0-5][0-9]|2[0-3][0-5][0-9]$/;
       
-      let digits = null
+      let digits = null;
       
       if (strNewTime != null && (strNewTime.length >= 3 && strNewTime.length <= 5)) {
         digits = rgxd.exec(strNewTime);
@@ -516,7 +516,7 @@ class App {
                 r2: data[i].m[month].d[day].r.r2,
                 r3: data[i].m[month].d[day].r.r3,
                 r4: data[i].m[month].d[day].r.r4
-              }
+              };
               resolve({
                 ok: true,
                 result: reg
@@ -569,8 +569,8 @@ class App {
   _addTime(worksheet, address, time) {
     
     /* Adiciona tempo nas celulas */
-    let h = mm(time).hours();
-    let m = mm(time).minutes();
+    // let h = mm(time).hours();
+    // let m = mm(time).minutes();
     let f = mm(time).format('HH:mm');
   
     let cell = {
@@ -672,10 +672,10 @@ class App {
             try {
               for (let i = 0; i < regs.length; i++) {
                 this._addDate(file.Sheets.Plan1, 'A'+(i+1), regs[i].date);
-                regs[i].reg.r1 != 0 ? this._addTime(file.Sheets.Plan1, 'B'+(i+1), regs[i].reg.r1) : ''
-                regs[i].reg.r2 != 0 ? this._addTime(file.Sheets.Plan1, 'C'+(i+1), regs[i].reg.r2) : ''
-                regs[i].reg.r3 != 0 ? this._addTime(file.Sheets.Plan1, 'D'+(i+1), regs[i].reg.r3) : ''
-                regs[i].reg.r4 != 0 ? this._addTime(file.Sheets.Plan1, 'E'+(i+1), regs[i].reg.r4) : ''
+                regs[i].reg.r1 != 0 ? this._addTime(file.Sheets.Plan1, 'B'+(i+1), regs[i].reg.r1) : '';
+                regs[i].reg.r2 != 0 ? this._addTime(file.Sheets.Plan1, 'C'+(i+1), regs[i].reg.r2) : '';
+                regs[i].reg.r3 != 0 ? this._addTime(file.Sheets.Plan1, 'D'+(i+1), regs[i].reg.r3) : '';
+                regs[i].reg.r4 != 0 ? this._addTime(file.Sheets.Plan1, 'E'+(i+1), regs[i].reg.r4) : '';
               }
 
               // xlsx.writeFile(file, outFileName);
@@ -687,7 +687,7 @@ class App {
                       result: res.result
                     });
                   } else {
-                    logger.error('App > export -> Erro ao ler arquivo de exportação: '+err);
+                    logger.error('App > export -> Erro ao ler arquivo de exportação.');
                     reject({ ok: false });
                   }
                 }).catch(err => {
@@ -701,7 +701,7 @@ class App {
               reject({ ok: false });
             }
           } else {
-            logger.error('App > export -> ok false: '+err);
+            logger.error('App > export -> ok false.');
             reject({ ok: false });
           }
         }).catch(err => {
@@ -709,7 +709,7 @@ class App {
           reject({ ok: false });
         });
       }).catch(err => {
-        logger.error('App > export -> Erro ao gerar exportação: '+err)
+        logger.error('App > export -> Erro ao gerar exportação: '+err);
         reject({ ok: false });
       });
     });

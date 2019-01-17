@@ -48,7 +48,7 @@ class Bot {
 
   /** Listeners principais */
   _mainListener() {
-    bot.onText(/usr/, () => console.log(this._app._users));
+
     /* Listener que sincroniza o usuario */
     bot.on('message', msg => {
       this._app.setUser(this._getUser(msg));
@@ -73,7 +73,7 @@ class Bot {
       name: '',
       bot: false,
       date: 0
-    }
+    };
 
     try {
       if (!msg.from.is_bot) {
@@ -239,7 +239,7 @@ class Bot {
       const opts = {
         chat_id: msg.chat.id,
         message_id: msg.message_id
-      }
+      };
 
       this._app.mountKeyboardRegs(strDate).then(res => {
         if (res.ok) {
@@ -274,7 +274,7 @@ class Bot {
             r2: res.result.r2,
             r3: res.result.r3,
             r4: res.result.r4
-          }
+          };
 
           let replyMsg = ''+
             ' Ponto de '+date.format('LL')+'\n'+
@@ -282,7 +282,7 @@ class Bot {
 
           bot.sendMessage(chatId, replyMsg);
         } else {
-          logger.error('Bot > _startListeners > onText(CMD_LIST) -> Erro ao carregar ponto: '+err);
+          logger.error('Bot > _startListeners > onText(CMD_LIST) -> Erro ao carregar ponto.');
           this._defaultMessageError(chatId);
         }
       }).catch(err => {
@@ -338,13 +338,13 @@ class Bot {
             /* https://github.com/yagop/node-telegram-bot-api/blob/master/doc/usage.md#sending-files */
           });
         } else {
-          logger.error('Bot > _startListeners > onText(CMD_EXPT) -> Erro ao exportar arquivo: '+err);
+          logger.error('Bot > _startListeners > onText(CMD_EXPT) -> Erro ao exportar arquivo.');
           this._defaultMessageError(chatId);
         }
       }).catch(err => {
         logger.error('Bot > _startListeners > onText(CMD_EXPT) -> Erro ao exportar arquivo: '+err);
         this._defaultMessageError(chatId);
-      })
+      });
     });
   }
 
@@ -401,13 +401,13 @@ class Bot {
     return this._app.mountKeyboardRegs(strDate).then(res => {
       if (res.ok) {
 
-        let cbCalendar = '*'+mm(date*1000).format('YYYY-MM')
+        let cbCalendar = '*'+mm(date*1000).format('YYYY-MM');
         let inlineKb = res.result.inline_keyboard[0].slice();
         inlineKb.push({ text: 'Pontos', callback_data: cbCalendar });
 
         let rm = {
           inline_keyboard: [inlineKb]
-        }
+        };
 
         bot.editMessageText(mm(strDate).format('LL'), opts).then(() => {
           bot.editMessageReplyMarkup(rm, opts);
@@ -477,7 +477,7 @@ class Bot {
         this._startListeners();                           // reativa os listesteners apos resposta do usuario
         this._defaultMessageError(opts.chat_id);
       });
-    })
+    });
   }
   
   /**
@@ -528,7 +528,7 @@ class Bot {
         r2: formatReg(reg.r2),
         r3: formatReg(reg.r3),
         r4: formatReg(reg.r4)
-      }
+      };
 
       switch (typeReg) {
         case 1: // comeco jornada

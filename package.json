@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "NODE_ENV=dev nodemon bot.js",
+    "debug": "NODE_ENV=debug nodemon bot.js",
+    "lint": "./node_modules/.bin/eslint bot.js ./src/*.js",
     "start": "node bot.js"
   },
   "repository": {
@@ -27,5 +28,8 @@
     "ignore": [
       "data/*"
     ]
+  },
+  "devDependencies": {
+    "eslint": "^5.12.0"
   }
 }

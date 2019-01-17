@@ -24,8 +24,8 @@ const logFormat = info => {
   //   return `${info.timestamp} - ${level} : ${info.message} ${JSON.stringify(info.data)}`
   // }
 
-  return `${info.timestamp} - ${level} : ${info.message}` // estrutura do log
-}
+  return `${info.timestamp} - ${level} : ${info.message}`;
+};
 
 const logger = winston.createLogger({
   format: winston.format.combine(

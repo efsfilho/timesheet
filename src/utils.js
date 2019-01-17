@@ -37,8 +37,8 @@ class Utils {
   }
 
   static checkDir(dir) {                                  // cria diretorio se nao existir
-    if (!fs.existsSync(dir, err => { if (err) throw err })) {
-      fs.mkdir(dir, err => { if (err) throw err });
+    if (!fs.existsSync(dir, err => { if (err) throw err; })) {
+      fs.mkdir(dir, err => { if (err) throw err; });
     }
   }
   
@@ -52,7 +52,7 @@ class Utils {
             resolve({
               ok: true,
               result: data
-            })
+            });
           }
         });
       } else {
