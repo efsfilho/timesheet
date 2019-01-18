@@ -37,4 +37,6 @@ let config = {
 
 `/editar` ou `Editar pontos`: exibe calendário para a alteração de pontos registrados
 
-`/atalho`                   : altera a lista de comandos para botões 
+`/atalho`                   : altera a lista de comandos para botões
+
+`/exp`                      : exporta folha(excel)
