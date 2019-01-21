@@ -40,3 +40,6 @@ let config = {
 `/atalho`                   : altera a lista de comandos para botões
 
 `/exp`                      : exporta folha(excel)
+
+## TODO
+Salvar registros em um db
