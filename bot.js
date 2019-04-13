@@ -8,7 +8,7 @@ const App = require('./src/app');
 const mm = require('moment');
 mm.locale('pt-BR');
 
-const key = '';
+const key = process.env.BOT1;
 const bot = new Ntba(key, { polling: true });
 
 const CMD = {
@@ -19,8 +19,9 @@ const CMD = {
   P4: /^\/c4\b|^Fim\sde\sjornada\b/,      // /c4  - ' ' registro de fim de jornada
   SHORTCUT: /\/atalho/,                   // /atalho
   EDIT: /\/editar\b|^Editar\spontos\b/,
-  EXPT: /\/exp/,                       // comando para exportar excel
-  LIST: /\/list/                          // /list - listar pontos do dia
+  EXPT: /\/exp/,                          // comando para exportar excel
+  LIST: /\/list/,                         // /list - listar pontos do dia
+  HELP: /\/help/                          // comando help
 };
 
 bot.onText(/eco/, msg => {
@@ -48,7 +49,7 @@ class Bot {
 
   /** Listeners principais */
   _mainListener() {
-
+    bot.onText(/usr/, () => console.log(this._app._users));
     /* Listener que sincroniza o usuario */
     bot.on('message', msg => {
       this._app.setUser(this._getUser(msg));
@@ -289,6 +290,41 @@ class Bot {
         logger.error('Bot > _startListeners > onText(CMD_LIST) -> Erro ao carregar ponto: '+err);
         this._defaultMessageError(chatId);
       });
+    });
+    
+    /* Listener de ajuda */
+    bot.onText(CMD.HELP, msg => {
+      const chatId = msg.chat.id;
+      const date = mm(msg.chat.time);
+      const help = 
+        '*Cadastrar ponto*\n'+
+        '  Os comandos `/c1`,`/c2`,`/c3` e `/c4` são usados para registrar ou atualizar, '+
+        'respectivamente: o início de jornada, início de almoço, fim de almoço e fim de jornada.\n'+
+        '  Para registrar o início de jornada, por exemplo, basta enviar o comando `/c1` será utilizado a '+
+        'hora/minuto do envio do comando para registrar o ponto. Se o comando for enviado às 13:15 o ponto'+
+        ' será registrado às 13:15(do dia do envio).\n'+
+        '  É possível enviar comando com uma hora/minuto específico, o comando deve ser precedido da '+
+        'hora/minuto desejado. Exemplo: `/c2 1650`¹ o ponto será registrado às 16:50(do dia do envio).\n\n'+
+        '*Editar ponto*\n'+
+        ' Para editar a hora/minuto de um ponto envie o comando `/editar` selecione o dia e '+
+        'o registro desejado e digite e envie a nova hora/minuto.'+
+        '\n\n'+
+        '`/c1` ou `/c1 1311`¹(para às 13:11)\n registra o começo de jornada com a hora do envio do comando\n'+
+        '`/c2` ou `/c2 1230`¹(para às 12:30)\n registra a saída pra o almoço\n'+
+        '`/c3` ou `/c3 1300`¹(para às 13:00)\n registra a volta de almoço\n'+
+        '`/c4` ou `/c4 1010`¹(para às 10:10)\n registra o fim da jornada\n'+
+        '`/editar` exibe calendário para a\n alteração de pontos registrados\n'+
+        ' \n'+
+        '`/list` Lista os registros do ponto do dia\n'+
+        '`/atalho` Altera a lista de comandos para botões\n'+
+        '`/exp` Exporta arquivo excel(Experimental)'+
+        ' \n\n'+
+        '¹ _Formato 24 Horas_ ';
+
+      const opts = {
+        parse_mode: 'Markdown'
+      };
+      bot.sendMessage(chatId, help, opts);
     });
 
     /* Listener que recebe as acoes dos botoes */
@@ -574,6 +610,7 @@ class Bot {
       bot.removeListener('callback_query');
       bot.removeTextListener(CMD.EXPT);
       bot.removeTextListener(CMD.LIST);
+      bot.removeTextListener(CMD.HELP);
     } catch (err) {
       logger.error('Bot > _stopListener -> Erro ao desativar listeners : '+err);
     }
