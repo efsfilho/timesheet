@@ -5,7 +5,7 @@ const Users = require('./users');
 const logger = require('./logger');
 
 const { existsFile, saveJSON, readJSON, checkDir, readFile } = require('./utils');
-
+const { setUser } = require('./dynamo');
 // const modelFileName = './src/file.xlsx'; // excel fonte para exportaçao 
 
 /** App */
@@ -17,8 +17,9 @@ class App {
    */
   constructor(config) {
     this._config = config;
-    this._user = null;
-    this._users = new Users(config);
+    this._userAdmin = '';
+    this._statusNewUsers = true; // status dos novos usuarios
+    this._users = []; // usuarios sincronizados
   }
 
   init() {
@@ -35,25 +36,74 @@ class App {
       logger.error('App > init -> Diretorios padrão não criados: '+err);
     }
     /* Carrega usuarios que ja registrados */
-    this._users.loadUsers();
+    // this._users.loadUsers();
   }
 
   /**
    * Atualiza os dados do usuario pra uso da classe
-   * @param {object} userObj - usuario
-   * @param {number} userObj.id - id do contato
-   * @param {string} userObj.username - username do contato
-   * @param {number} userObj.name - nomde do contato
-   * @param {boolean} userObj.bot
-   * @param {number} userObj.date - data do chat
+   * @param {object} msgUser - msg.from
+   * @param {number} msgUser.id - usuario
+   * @param {boolean} msgUser.is_bot
+   * @param {string} msgUser.first_name
+   * @param {string} msgUser.last_name
+   * @param {string} msgUser.username
+   * @param {string} msgUser.language_code
    */
-  setUser(userObj) {
+  setUser(msgUser) {
     try {
-      this._user = userObj;
-      this._users.checkUser(userObj);
+      let user = msgUser;
+      let userExists = this._users.filter(item =>
+        item.id === user.id).length > 0;
+
+      if (!userExists) {
+        user.enabled = this._statusNewUsers;
+        this._users.push(user);
+        logger.info('New user:'+JSON.stringify(user));
+      }
     } catch(err) {
       logger.error('App > setUser -> Erro ao verificar usuário: '+err);
     }
+  }
+
+  /**
+   * Identifica usuarios
+   * @param {object} msgUser - msg.from
+   * @param {number} msgUser.id - usuario
+   * @param {boolean} msgUser.is_bot
+   * @param {string} msgUser.first_name
+   * @param {string} msgUser.last_name
+   * @param {string} msgUser.username
+   * @param {string} msgUser.language_code
+   */
+  filterUser(msgUser) {
+    return new Promise((resolve, reject) => {
+
+      let user = msgUser;
+      let userExists = this._users.filter(item =>
+        item.id === user.id).length > 0;
+
+      if (!userExists) {
+        user.enabled = this._statusNewUsers;
+        user.date = mm().format();
+
+        setUser(user).then(res => {
+          if (res.ok) {
+            this._users.push(user);
+            logger.info('User novo: '+JSON.stringify(user));
+          } else {
+            logger.info('User não salvo: '+res.result);
+          }
+        }).catch(res => {
+          logger.error('App > filterUser -> Erro ao salvar usuário: '+JSON.stringify(res.result));
+        });
+      }
+
+      if (user.enabled || user.username === this._userAdmin) {
+        resolve({ ok: true});
+      } else {
+        resolve({ ok: false });
+      }
+    });
   }
 
   /**
