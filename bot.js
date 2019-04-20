@@ -8,7 +8,7 @@ const App = require('./src/app');
 const mm = require('moment');
 mm.locale('pt-BR');
 
-const key = process.env.BOT1;
+const key = process.env.BOT2;
 const bot = new Ntba(key, { polling: true });
 
 const CMD = {
@@ -47,12 +47,38 @@ class Bot {
     this.users = [];
   }
 
+  _filter(id) {
+    return new Promise((resolve, reject) => {
+      if (id == 0) {
+        resolve();
+      } else {
+        reject();
+      }
+    });
+  }
+
+  _onText(rgxp, cb) {
+    bot.onText(rgxp, msg => {
+      this._filter(msg.from.id).then(() => {
+        cb(msg);
+      }).catch(() => {
+        console.log('não permitido');
+      });
+    });
+  }
+
   /** Listeners principais */
   _mainListener() {
-    bot.onText(/usr/, () => console.log(this._app._users));
+    this._onText(/usr/, () => console.log(this._app._users));
+
     /* Listener que sincroniza o usuario */
     bot.on('message', msg => {
-      this._app.setUser(this._getUser(msg));
+      logger.debug(JSON.stringify({
+        message_id: msg.message_id,
+        chat: msg.chat
+      }));
+
+      this._app.filterUser(msg.from);
     });
 
     /* Listener start commando */
@@ -85,7 +111,7 @@ class Bot {
         user.date = msg.date;
       }
     } catch (err) {
-      logger.error('Bot > _getUser -> Erro ao carregar estruturado usuario: '+err);
+      logger.error(['Bot > _getUser -> Erro ao carregar estruturado usuario:', err]);
       return null;
     }
     return user;
@@ -114,7 +140,7 @@ class Bot {
             this._defaultMessageError(chatId);
           }
         }).catch(err => {
-          logger.error('Bot > _startListeners -> onText(CMD.P1) Erro ao atualizar registro de ponto: '+err);
+          logger.error(['Bot > _startListeners -> onText(CMD.P1) Erro ao atualizar registro de ponto:', err]);
           this._defaultMessageError(chatId);
         });
       } else {
@@ -142,7 +168,7 @@ class Bot {
             this._defaultMessageError(chatId);
           }
         }).catch(err => {
-          logger.error('Bot > _startListeners -> onText(CMD.P2) Erro ao atualizar registro de ponto: '+err);
+          logger.error(['Bot > _startListeners -> onText(CMD.P2) Erro ao atualizar registro de ponto:', err]);
           this._defaultMessageError(chatId);
         });
       } else {
@@ -170,7 +196,7 @@ class Bot {
             this._defaultMessageError(chatId);
           }
         }).catch(err => {
-          logger.error('Bot > _startListeners -> onText(CMD.P3) Erro ao atualizar registro de ponto: '+err);
+          logger.error(['Bot > _startListeners -> onText(CMD.P3) Erro ao atualizar registro de ponto:', err]);
           this._defaultMessageError(chatId);
         });
       } else {
@@ -198,7 +224,7 @@ class Bot {
             this._defaultMessageError(chatId);
           }
         }).catch(err => {
-          logger.error('Bot > _startListeners -> onText(CMD.P4) Erro ao atualizar registro de ponto: '+err);
+          logger.error(['Bot > _startListeners -> onText(CMD.P4) Erro ao atualizar registro de ponto:', err]);
           this._defaultMessageError(chatId);
         });
       } else {
@@ -258,7 +284,7 @@ class Bot {
           this._defaultMessageError(opts.chat_id);
         }
       }).catch(err => {
-        logger.error('Bot > _startListeners > onText(CMD_EDIT) -> Erro ao carregar ponto: '+err);
+        logger.error(['Bot > _startListeners > onText(CMD_EDIT) -> Erro ao carregar ponto:', err]);
         this._defaultMessageError(opts.chat_id);
       });
     });
@@ -287,7 +313,7 @@ class Bot {
           this._defaultMessageError(chatId);
         }
       }).catch(err => {
-        logger.error('Bot > _startListeners > onText(CMD_LIST) -> Erro ao carregar ponto: '+err);
+        logger.error(['Bot > _startListeners > onText(CMD_LIST) -> Erro ao carregar ponto:', err]);
         this._defaultMessageError(chatId);
       });
     });
@@ -378,7 +404,7 @@ class Bot {
           this._defaultMessageError(chatId);
         }
       }).catch(err => {
-        logger.error('Bot > _startListeners > onText(CMD_EXPT) -> Erro ao exportar arquivo: '+err);
+        logger.error(['Bot > _startListeners > onText(CMD_EXPT) -> Erro ao exportar arquivo:', err]);
         this._defaultMessageError(chatId);
       });
     });
@@ -394,7 +420,7 @@ class Bot {
         this._defaultMessageError(chatId);
       }
     }).catch(err => {
-      logger.error('Bot > _commandReg -> Erro ao registrar ponto : '+err);
+      logger.error(['Bot > _commandReg -> Erro ao registrar ponto:', err]);
       this._defaultMessageError(chatId);
     });
   }
@@ -418,7 +444,7 @@ class Bot {
         this._defaultMessageError(opts.chat_id);
       }
     }).catch(err => {
-      logger.error('Bot > _callbackQueryUpdateKeyBoardCalendar -> Erro ao atualizar teclado calendario: '+err);
+      logger.error(['Bot > _callbackQueryUpdateKeyBoardCalendar -> Erro ao atualizar teclado calendario:', err]);
       this._defaultMessageError(opts.chat_id);
     });
   }
@@ -456,7 +482,7 @@ class Bot {
         this._defaultMessageError(opts.chat_id);
       }
     }).catch(err => {
-      logger.error('Bot > _callbackQueryKeyBoardRegs -> Erro ao carregar calendario: '+err);
+      logger.error(['Bot > _callbackQueryKeyBoardRegs -> Erro ao carregar calendario:', err]);
       this._defaultMessageError(opts.chat_id);
     });
   }
@@ -499,7 +525,7 @@ class Bot {
             }
             this._startListeners();
           }).catch(err => {
-            logger.error('Bot > _callbackQueryUpdateReg > Erro ao atualizar ponto : '+err);
+            logger.error(['Bot > _callbackQueryUpdateReg > Erro ao atualizar ponto', err]);
             this._startListeners();
             this._defaultMessageError(opts.chat_id);
           });
@@ -509,7 +535,7 @@ class Bot {
           this._defaultMessageError(opts.chat_id);
         }
       }).catch(err => {
-        logger.error('Bot > _callbackQueryUpdateReg -> Erro ao atualizar registro de ponto: '+err);
+        logger.error(['Bot > _callbackQueryUpdateReg -> Erro ao atualizar registro de ponto:', err]);
         this._startListeners();                           // reativa os listesteners apos resposta do usuario
         this._defaultMessageError(opts.chat_id);
       });
@@ -534,7 +560,7 @@ class Bot {
         this._defaultMessageError(opts.chat_id);
       }
     }).catch(err => {
-      logger.error('Bot > _callbackQueryKeyBoardCalendar -> Erro ao atualizar teclado calendario : '+err);
+      logger.error(['Bot > _callbackQueryKeyBoardCalendar -> Erro ao atualizar teclado calendario', err]);
       this._defaultMessageError(opts.chat_id);
     });
   }
@@ -588,7 +614,7 @@ class Bot {
       replyMsg += '  '+r.r1+'  |  '+r.r2+'  |  '+r.r3+'  |  '+r.r4;
     } catch (err) {
       replyMsg = '';
-      logger.error('Bot > _defaultMessageUpdateReg -> Erro ao criar mensagem : '+err);
+      logger.error(['Bot > _defaultMessageUpdateReg -> Erro ao criar mensagem', err]);
     }
     return replyMsg;
   }
@@ -612,15 +638,15 @@ class Bot {
       bot.removeTextListener(CMD.LIST);
       bot.removeTextListener(CMD.HELP);
     } catch (err) {
-      logger.error('Bot > _stopListener -> Erro ao desativar listeners : '+err);
+      logger.error(['Bot > _stopListener -> Erro ao desativar listeners', err]);
     }
   }
 
   /** Error listeners */
   _errorHandlingListeners() {
-    bot.on('polling_error', err => logger.error('Polling error - '+err));
-    bot.on('webhook_error', err => logger.error('Webhook error - '+err));
-    bot.on('error', err => logger.error('Bot -> _errorHandlingListeners: '+err));
+    bot.on('polling_error', err => logger.error(['Polling error - ', err]));
+    bot.on('webhook_error', err => logger.error(['Webhook error - ', err]));
+    bot.on('error', err => logger.error(['Bot -> _errorHandlingListeners:', err]));
   }
 }
 

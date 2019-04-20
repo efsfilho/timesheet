@@ -17,7 +17,7 @@ class App {
    */
   constructor(config) {
     this._config = config;
-    this._userAdmin = '';
+    this._userAdmin = ''; // username do admin
     this._statusNewUsers = true; // status dos novos usuarios
     this._users = []; // usuarios sincronizados
   }
@@ -33,7 +33,7 @@ class App {
       /* local temporario dos arquivos para exportacao */
       checkDir(this._config.exportLocal);
     } catch (err) {
-      logger.error('App > init -> Diretorios padrão não criados: '+err);
+      logger.error(['App > init -> Diretorios padrão não criados:', err]);
     }
     /* Carrega usuarios que ja registrados */
     // this._users.loadUsers();
@@ -58,10 +58,10 @@ class App {
       if (!userExists) {
         user.enabled = this._statusNewUsers;
         this._users.push(user);
-        logger.info('New user:'+JSON.stringify(user));
+        logger.info(['New user:', user]);
       }
     } catch(err) {
-      logger.error('App > setUser -> Erro ao verificar usuário: '+err);
+      logger.error(['App > setUser -> Erro ao verificar usuário:', err]);
     }
   }
 
@@ -74,36 +74,31 @@ class App {
    * @param {string} msgUser.last_name
    * @param {string} msgUser.username
    * @param {string} msgUser.language_code
+   * @return {boolean}
    */
   filterUser(msgUser) {
-    return new Promise((resolve, reject) => {
 
-      let user = msgUser;
-      let userExists = this._users.filter(item =>
-        item.id === user.id).length > 0;
+    let user = msgUser;
+    let userExists = this._users.filter(item =>
+      item.id === user.id).length > 0;
 
-      if (!userExists) {
-        user.enabled = this._statusNewUsers;
-        user.date = mm().format();
+    if (!userExists) {
+      user.enabled = this._statusNewUsers;
+      user.date = mm().format();
 
-        setUser(user).then(res => {
-          if (res.ok) {
-            this._users.push(user);
-            logger.info('User novo: '+JSON.stringify(user));
-          } else {
-            logger.info('User não salvo: '+res.result);
-          }
-        }).catch(res => {
-          logger.error('App > filterUser -> Erro ao salvar usuário: '+JSON.stringify(res.result));
-        });
-      }
+      setUser(user).then(res => {
+        if (res.ok) {
+          this._users.push(user);
+          logger.info(['User novo:', user]);
+        } else {
+          logger.info(['User não salvo:', res.result]);
+        }
+      }).catch(res => {
+        logger.error(['App > filterUser -> Erro ao salvar usuário:', res.result]);
+      });
+    }
 
-      if (user.enabled || user.username === this._userAdmin) {
-        resolve({ ok: true});
-      } else {
-        resolve({ ok: false });
-      }
-    });
+    return user.enabled || user.username === this._userAdmin;
   }
 
   /**
@@ -207,12 +202,12 @@ class App {
               result: keyBoard
             });
           } catch (err) {
-            logger.error('App > mountKeyboardCalendar -> Erro ao montar botoes: '+err);
+            logger.error(['App > mountKeyboardCalendar -> Erro ao montar botoes:', err]);
             reject({ ok: false });
           }
         }
       }).catch(err => {
-        logger.error('App > mountKeyboardCalendar -> Erro ao montar botoes: '+err);
+        logger.error(['App > mountKeyboardCalendar -> Erro ao montar botoes:', err]);
         reject({ ok: false });
       });
     });
@@ -284,7 +279,7 @@ class App {
           reject({ ok: false });
         }
       }).catch(err => {
-        logger.error('App > mountKeyboardRegs -> Erro ao gerar teclado com registros: '+JSON.stringify(err));
+        logger.error(['App > mountKeyboardRegs -> Erro ao gerar teclado com registros:', err]);
         reject({ ok: false });
       });    
     });
@@ -313,7 +308,7 @@ class App {
             reject({ ok: false });
           }
         }).catch(err => {
-          logger.error('App > addReg -> Erro ao atualizar o ponto(_updateReg): '+err);
+          logger.error(['App > addReg -> Erro ao atualizar o ponto(_updateReg):', err]);
           reject({ ok: false });
         });
       }
@@ -346,7 +341,7 @@ class App {
               reject({ ok: false });
             }
           }).catch(err => {
-            logger.debug('App > updateReg -> Erro ao atualizar o registro '+ err);
+            logger.debug(['App > updateReg -> Erro ao atualizar o registro:', err]);
             reject({ ok: false });
           });
         } else {
@@ -381,7 +376,7 @@ class App {
           reject({ ok: false });
         }
       }).catch(err => {
-        logger.error('App > listDayReg -> Erro carregar ponto: '+JSON.stringify(err));
+        logger.error(['App > listDayReg -> Erro carregar ponto:', err]);
         reject({ ok: false });
       });
     });
@@ -521,16 +516,16 @@ class App {
               reject({ ok: false });
             }
           }).catch(err => {
-            logger.error('App > updateReg -> Erro ao salvar registro de ponto: '+err);
+            logger.error(['App > updateReg -> Erro ao salvar registro de ponto:', err]);
             reject({ ok: false });
           });
 
         } catch (err) {
-          logger.error('App > updateReg -> Erro ao registrar ponto: '+err);
+          logger.error(['App > updateReg -> Erro ao registrar ponto:', err]);
           reject({ ok: false });
         }
       }).catch(err => {
-        logger.error('App > updateReg -> Erro ao ler ponto: '+err);
+        logger.error(['App > updateReg -> Erro ao ler ponto:', err]);
         reject({ ok: false });
       });
     });
@@ -574,11 +569,11 @@ class App {
             }
           }
         } catch(err) {
-          logger.error('App > getReg -> Erro ao recuperar registros: '+err);
+          logger.error(['App > getReg -> Erro ao recuperar registros:', err]);
           reject({ ok: false });
         }
       }).catch(err => {
-        logger.error('App > getReg -> Erro ao ler registros: '+err);
+        logger.error(['App > getReg -> Erro ao ler registros:', err]);
         reject({ ok: false });
       });
     });
@@ -670,7 +665,7 @@ class App {
                   reg: objMonth.d[l].r
                 });
               } catch (err) {
-                logger.error('App > _processFileToExport -> Erro ao ler registros: '+err);
+                logger.error(['App > _processFileToExport -> Erro ao ler registros:', err]);
                 reject({ ok: false });
               }
             }
@@ -682,7 +677,7 @@ class App {
           result: regsObj
         });
       } catch (err) {
-        logger.error('App > _processFileToExport -> Erro ao processar exportação: '+err);
+        logger.error(['App > _processFileToExport -> Erro ao processar exportação:', err]);
         reject({ ok: false });
       }
     });
@@ -741,13 +736,13 @@ class App {
                     reject({ ok: false });
                   }
                 }).catch(err => {
-                  logger.error('App > export -> Erro ao ler arquivo de exportação: '+err);
+                  logger.error(['App > export -> Erro ao ler arquivo de exportação:', err]);
                   reject({ ok: false });
                 });
               });
 
             } catch (err) {
-              logger.error('App > export -> Erro ao gerar arquivo de exportação: '+err);
+              logger.error(['App > export -> Erro ao gerar arquivo de exportação:', err]);
               reject({ ok: false });
             }
           } else {
@@ -755,11 +750,11 @@ class App {
             reject({ ok: false });
           }
         }).catch(err => {
-          logger.error('App > export -> Erro ao processar exportação: '+err);
+          logger.error(['App > export -> Erro ao processar exportação:', err]);
           reject({ ok: false });
         });
       }).catch(err => {
-        logger.error('App > export -> Erro ao gerar exportação: '+err);
+        logger.error(['App > export -> Erro ao gerar exportação:', err]);
         reject({ ok: false });
       });
     });

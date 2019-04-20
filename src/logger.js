@@ -1,14 +1,14 @@
 const winston = require('winston');
 const config = require('../config/index');
 
-/** 
+/**
  * Formatacao do log
  * @returns {string} YYYY-MM-DD hh:mm:ss - (ERROR|INFO) : message
  */
 const logFormat = info => {
   let level = info.level.toUpperCase();
-  level = level == 'INFO' ? level+' ' : level;            //(ERROR|INFO) mantem o level com 5 caracteres
-  
+  level = level == 'INFO' ? level+' ' : level; //(ERROR|INFO) mantem o level com 5 caracteres
+
   /* TODO info.data adicionado para parse de alguns objetos */
   // if (typeof(info.data) === 'undefined') {
   //   return `${info.timestamp} - ${level} : ${info.message}`;
@@ -23,8 +23,20 @@ const logFormat = info => {
   //   // info.data = JSON.stringify(info.data);
   //   return `${info.timestamp} - ${level} : ${info.message} ${JSON.stringify(info.data)}`
   // }
-
-  return `${info.timestamp} - ${level} : ${info.message}`;
+  let message = '';
+  if (Array.isArray(info.message)) {
+    info.message.forEach(item => {
+      if (typeof item == 'object') {
+        message = message+' '+JSON.stringify(item);
+      } else {
+        message = message+item;
+      }
+    });
+  } else {
+    message = info.message;
+  }
+  
+  return `${info.timestamp} - ${level} : ${message}`;
 };
 
 const logger = winston.createLogger({
