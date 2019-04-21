@@ -47,38 +47,53 @@ class Bot {
     this.users = [];
   }
 
-  _filter(id) {
-    return new Promise((resolve, reject) => {
-      if (id == 0) {
-        resolve();
+  _filter(msg, cb) {
+    if (this._app.filterUser(msg.from)) {
+      cb(msg);
+    } else {
+      bot.sendMessage(msg.chat.id, 'Acesso não permitido!');
+    }
+  };
+
+  _onText(rgxp, cb) {
+    // bot.onText(rgxp, msg => this._filter(msg, cb));
+    bot.onText(rgxp, msg => {
+      if (this._app.filterUser(msg.from)) {
+        cb(msg);
       } else {
-        reject();
+        bot.sendMessage(msg.chat.id, 'Acesso não permitido!');
       }
     });
   }
 
-  _onText(rgxp, cb) {
+  _onTextSuper(rgxp, cb) {
     bot.onText(rgxp, msg => {
-      this._filter(msg.from.id).then(() => {
+      if (this._app.filterUserSuper(msg.from)) {
         cb(msg);
-      }).catch(() => {
-        console.log('não permitido');
-      });
+      } else {
+        bot.sendMessage(msg.chat.id, 'Acesso não permitido!');
+      }
     });
+  }
+
+  _onMessage(cb) {
+    bot.on('message', msg => this._filter(msg, cb));
   }
 
   /** Listeners principais */
   _mainListener() {
-    this._onText(/usr/, () => console.log(this._app._users));
+    this._onTextSuper(/usr/, msg => {
+      console.log('this._app._users');
+    });
 
-    /* Listener que sincroniza o usuario */
+    /* DEBUG */
     bot.on('message', msg => {
-      logger.debug(JSON.stringify({
-        message_id: msg.message_id,
-        chat: msg.chat
-      }));
-
-      this._app.filterUser(msg.from);
+      logger.debug([{
+        user_id: msg.from.id,
+        username: msg.from.username,
+        name: `${msg.from.first_name} ${msg.from.last_name}`,
+        text: msg.text
+      }]);
     });
 
     /* Listener start commando */

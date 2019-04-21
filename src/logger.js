@@ -59,12 +59,10 @@ const logger = winston.createLogger({
   ]
 });
 
-if (process.env.NODE_ENV === 'dev') {
-  logger.add(new winston.transports.Console());
-}
-
 if (process.env.NODE_ENV === 'debug') {
   logger.add(new winston.transports.Console({ level: 'debug' }));
+} else {
+  logger.add(new winston.transports.Console());
 }
 
 module.exports = logger;

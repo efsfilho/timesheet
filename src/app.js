@@ -5,7 +5,7 @@ const Users = require('./users');
 const logger = require('./logger');
 
 const { existsFile, saveJSON, readJSON, checkDir, readFile } = require('./utils');
-const { setUser } = require('./dynamo');
+const { setUser, getUsers } = require('./dynamo');
 // const modelFileName = './src/file.xlsx'; // excel fonte para exportaçao 
 
 /** App */
@@ -17,12 +17,20 @@ class App {
    */
   constructor(config) {
     this._config = config;
-    this._userAdmin = ''; // username do admin
+    this._userNameAdmin = ''; // username do admin
+    this._userIdAdmin = 0;
     this._statusNewUsers = true; // status dos novos usuarios
     this._users = []; // usuarios sincronizados
   }
 
   init() {
+
+    getUsers().then(users => {
+      this._users = users;
+      logger.info(['Usuarios carregados: ', this._users.length])
+    }).catch(err => {
+      logger.error(['App > init -> Erro ao carregar usuários', err]);
+    });
     try {
       /* local dos logs */
       checkDir(this._config.logLocal);
@@ -39,30 +47,44 @@ class App {
     // this._users.loadUsers();
   }
 
-  /**
-   * Atualiza os dados do usuario pra uso da classe
-   * @param {object} msgUser - msg.from
-   * @param {number} msgUser.id - usuario
-   * @param {boolean} msgUser.is_bot
-   * @param {string} msgUser.first_name
-   * @param {string} msgUser.last_name
-   * @param {string} msgUser.username
-   * @param {string} msgUser.language_code
-   */
-  setUser(msgUser) {
-    try {
-      let user = msgUser;
-      let userExists = this._users.filter(item =>
-        item.id === user.id).length > 0;
+  // /**
+  //  * Atualiza os dados do usuario pra uso da classe
+  //  * @param {object} msgUser - msg.from
+  //  * @param {number} msgUser.id - usuario
+  //  * @param {boolean} msgUser.is_bot
+  //  * @param {string} msgUser.first_name
+  //  * @param {string} msgUser.last_name
+  //  * @param {string} msgUser.username
+  //  * @param {string} msgUser.language_code
+  //  */
+  // setUser(msgUser) {
+  //   try {
+  //     let user = msgUser;
+      
+  //     let userExists = this._users.filter(item =>
+  //       item.id === user.id).length > 0;
 
-      if (!userExists) {
-        user.enabled = this._statusNewUsers;
-        this._users.push(user);
-        logger.info(['New user:', user]);
-      }
-    } catch(err) {
-      logger.error(['App > setUser -> Erro ao verificar usuário:', err]);
-    }
+  //     if (!userExists) {
+  //       user.enabled = this._statusNewUsers;
+  //       this._users.push(user);
+  //       logger.info(['New user:', user]);
+  //     }
+  //   } catch(err) {
+  //     logger.error(['App > setUser -> Erro ao verificar usuário:', err]);
+  //   }
+  // }
+
+  /**
+   * Identifica admin
+   * @param {object} msg - msg.from
+   * @param {number} msg.id - usuario
+   * @param {string} msg.username
+   * @return {boolean}
+   */
+  filterUserSuper(msg) {
+    if (msg.id === this._userIdAdmin) return true;
+    if (msg.username === this._userNameAdmin) return true;
+    return false;
   }
 
   /**
@@ -79,10 +101,15 @@ class App {
   filterUser(msgUser) {
 
     let user = msgUser;
-    let userExists = this._users.filter(item =>
-      item.id === user.id).length > 0;
+    let users = this._users.filter(item => item.id === user.id);
 
-    if (!userExists) {
+    user.username = msgUser.username || 'null';
+    user.first_name = msgUser.first_name || 'null';
+    user.last_name = msgUser.last_name || 'null';
+ 
+    if (users.length > 0) {
+      user = users[0];
+    } else {
       user.enabled = this._statusNewUsers;
       user.date = mm().format();
 
@@ -159,7 +186,7 @@ class App {
           }
         ]
       ];
-  
+
       this._getDayButtons(date.month()).then(res => {
         if (res.ok) {
           try {

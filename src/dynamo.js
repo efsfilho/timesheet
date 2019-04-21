@@ -23,19 +23,31 @@ class DynamoDBClient {
         }
       };
 
-      docClient.put(params, (err) => {
+      docClient.put(params, err => {
         if (err) {
-          reject({
-            ok: false,
-            result: err
-          });
+          reject(err);
         } else {
-          resolve({ ok: true });
+          resolve();
         }
       });
     });
   }
+
+  static getUsers() {
+    return new Promise((resolve, reject) => {
+      let docClient = new aws.DynamoDB.DocumentClient();
+      
+      docClient.scan({ TableName: 'UsersTeste' }, (err, data) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(data.Items);
+        }
+      });
+
+    });
+    
+  }
 }
 
 module.exports = DynamoDBClient;
-
