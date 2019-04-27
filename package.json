@@ -5,6 +5,7 @@
   "main": "bot.js",
   "scripts": {
     "debug": "NODE_ENV=debug nodemon bot.js",
+    "createdb": "cd dynamodb && node dynamo.js && cd ..",
     "lint": "./node_modules/.bin/eslint bot.js ./src/*.js",
     "start": "node bot.js"
   },

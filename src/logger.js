@@ -1,5 +1,5 @@
 const winston = require('winston');
-const config = require('../config/index');
+const { logDir } = require('../config/index');
 
 /**
  * Formatacao do log
@@ -33,7 +33,7 @@ const logFormat = info => {
       }
     });
   } else {
-    message = info.message;
+    message = ' '+info.message;
   }
   
   return `${info.timestamp} - ${level} : ${message}`;
@@ -46,13 +46,13 @@ const logger = winston.createLogger({
   ),
   transports: [
     new winston.transports.File({
-      filename: config.logLocal+'/error.log',
+      filename: logDir+'error.log',
       level: 'error',
       maxsize:  5000000,
       maxFiles: 5
     }),
     new winston.transports.File({
-      filename: config.logLocal+'/log.log',
+      filename: logDir+'log.log',
       maxsize:  5000000,
       maxFiles: 5
     })
