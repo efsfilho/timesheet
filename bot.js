@@ -7,7 +7,7 @@ const App = require('./src/app');
 const mm = require('moment');
 mm.locale('pt-BR');
 
-const token = process.env.TELEGRAM_TOKEN;
+const token = '';
 
 const bot = new Ntba(token, { polling: true });
 

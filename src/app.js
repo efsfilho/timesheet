@@ -334,19 +334,20 @@ class App {
 
         this._updateReg(item, typeReg, newTime);
         setReg(item, year).then(() => {
-          resolve();
+          resolve({ result: item });
         }).catch(err => {
           logger.error(['App > addReg > setReg -> Erro ao salvar ponto:', err]);
           reject(err);
         });
       }).catch(err => {
-        // TODO validacao
         if (err.message == 'Requested resource not found') {
           // tabela nao encontrada
+
+          // TODO validacao do err
           createTableReg(year).then(() => {
             setTimeout(() => {
               setReg(item, year).then(() => {
-                resolve();
+                resolve({ result: item });
               }).catch(err => {
                 logger.error(['App > addReg > setReg -> Erro ao registrar ponto depois de criar a tabela:', err]);
                 reject(err);
@@ -361,64 +362,8 @@ class App {
           reject(err);
         }
       });
-
-    //   getRegs(chatId).then(data => {
-    //     let dayReg = null;  // pontos do dia
-    //     if (data.hasOwnProperty('Item')) {
-
-    //       let year = Number(mm().format('YYYY'));
-    //       let regs = data.Item.regs; // procura item do ano
-
-    //       if (regs.filter(item => item.y == year).length > 0) {
-    //         // item do ano
-    //         let i = regs.findIndex(item => item.y == year);
-
-    //         dayReg = this._updateReg(regs[i], typeReg, newTime*1000);
-    //       } else {
-    //         // sem item no ano
-    //         let newRegs = this._getDefaultStructure();
-
-    //         dayReg = this._updateReg(newRegs, typeReg, newTime*1000);
-    //         regs.push(newRegs);
-    //       }
-    //       updateRegs(data.Item).then(() => {
-    //         resolve({ result: dayReg });
-    //       }).catch(err => {
-    //         logger.error(['App > addReg -> Erro ao atualizar o ponto(updateRegs):', err]);
-    //         reject(err);
-    //       });
-    //     } else {
-    //       // sem registros
-    //       let newRegs = {
-    //         userId: chatId,
-    //         regs: [this._getDefaultStructure()]
-    //       }
-    //       dayReg = this._updateReg(newRegs.regs[0], typeReg, newTime*1000);
-
-    //       setRegs(newRegs).then(() => {
-    //         resolve({ result: dayReg });
-    //       }).catch(err => {
-    //         logger.error(['App > addReg -> Erro ao atualizar o ponto(setRegs):', err]);
-    //         reject(err);
-    //       });
-    //     }
-    //   }).catch(err => {
-    //     logger.error(['App > addReg -> Erro ao atualizar o ponto(getRegs):', err]);
-    //     reject(err);
-    //   });
     });
   }
-
-  // _setReg(item, year){
-  //   return new Promise((resolve, reject) => {
-  //     setReg(item, year).then(() => {
-  //       resolve();
-  //     }).catch(err => {
-  //       logger.error(['App > _setReg > Erro ao salvar ponto:', err]);
-  //       reject(err);
-  //     });
-  //   });
-  // }
 
   /**
    * Carrega ponto do dia
