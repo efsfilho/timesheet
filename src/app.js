@@ -3,7 +3,7 @@ const mm = require('moment');
 const xlsx = require('xlsx');
 const logger = require('./logger');
 const { logDir, exportDir, exportModelFileName } = require('../config/index');
-const { getUsers, setUser, getRegs, setReg, createTableReg, setRegs, updateRegs} = require('./dynamo');
+const { getUsers, setUser, getReg, setReg, createTableReg, setRegs, updateRegs} = require('./dynamo');
 
 /** App */
 class App {
@@ -308,87 +308,117 @@ class App {
 
   /**
    * Adiciona registro de ponto
-   * @param {Number} chatId
-   * @param {Number} typeReg - tipo de registro (1,2,3 ou 4)
-   * @param {Number} newTime - unix timestamp
+   * @param {number} chatId
+   * @param {number} typeReg - tipo de registro (1,2,3 ou 4)
+   * @param {number} newTime - unix timestamp
    */
   addReg(chatId, typeReg, newTime) {
     return new Promise((resolve, reject) => {
-      let ep = newTime*1000;
-      let year = mm(ep).year().toString();
-      let item = {
-        userId: chatId,
-        day: ep,
-        r1: 0,
-        r2: 0,
-        r3: 0,
-        r4: 0
-      }
-      setReg(item, year).then(() => resolve()).catch(err => {
-        if (err.statusCode == 400) {
-          createTableReg(year).then(data => {
-            console.log(data);
-            // setReg(item, year).then(() => resolve()).catch(err => reject(err));
+      newTime = newTime*1000;
+      let date = mm(newTime).format('YYYY-MM-DD');
+      let year = mm(newTime).year().toString();
+      
+      getReg(chatId, year, date).then(data => {
+        let item = {
+          userId: chatId,
+          date: date,
+          r1: 0,
+          r2: 0,
+          r3: 0,
+          r4: 0
+        };
+
+        if (data.hasOwnProperty('Items') && data.Count > 0) {
+          item = data.Items[0];
+        }
+
+        this._updateReg(item, typeReg, newTime);
+        setReg(item, year).then(() => {
+          resolve();
+        }).catch(err => {
+          logger.error(['App > addReg > setReg -> Erro ao salvar ponto:', err]);
+          reject(err);
+        });
+      }).catch(err => {
+        // TODO validacao
+        if (err.message == 'Requested resource not found') {
+          // tabela nao encontrada
+          createTableReg(year).then(() => {
+            setTimeout(() => {
+              setReg(item, year).then(() => {
+                resolve();
+              }).catch(err => {
+                logger.error(['App > addReg > setReg -> Erro ao registrar ponto depois de criar a tabela:', err]);
+                reject(err);
+              });
+            }, 5000);
           }).catch(err => {
+            logger.error(['App > addReg > createTableReg -> Erro ao criar tabela:', err]);
             reject(err);
           });
         } else {
+          logger.error(['App > addReg > getReg -> Erro ao registrar ponto:', err]);
           reject(err);
         }
-        reject(err)
-      })
-      // console.log([year, newTime]);
-      // reject();
+      });
 
+    //   getRegs(chatId).then(data => {
+    //     let dayReg = null;  // pontos do dia
+    //     if (data.hasOwnProperty('Item')) {
 
+    //       let year = Number(mm().format('YYYY'));
+    //       let regs = data.Item.regs; // procura item do ano
 
-      // getRegs(chatId).then(data => {
+    //       if (regs.filter(item => item.y == year).length > 0) {
+    //         // item do ano
+    //         let i = regs.findIndex(item => item.y == year);
 
-      //   let dayReg = null;  // pontos do dia
-      //   if (data.hasOwnProperty('Item')) {
+    //         dayReg = this._updateReg(regs[i], typeReg, newTime*1000);
+    //       } else {
+    //         // sem item no ano
+    //         let newRegs = this._getDefaultStructure();
 
-      //     let year = Number(mm().format('YYYY'));
-      //     let regs = data.Item.regs; // procura item do ano
+    //         dayReg = this._updateReg(newRegs, typeReg, newTime*1000);
+    //         regs.push(newRegs);
+    //       }
+    //       updateRegs(data.Item).then(() => {
+    //         resolve({ result: dayReg });
+    //       }).catch(err => {
+    //         logger.error(['App > addReg -> Erro ao atualizar o ponto(updateRegs):', err]);
+    //         reject(err);
+    //       });
+    //     } else {
+    //       // sem registros
+    //       let newRegs = {
+    //         userId: chatId,
+    //         regs: [this._getDefaultStructure()]
+    //       }
+    //       dayReg = this._updateReg(newRegs.regs[0], typeReg, newTime*1000);
 
-      //     if (regs.filter(item => item.y == year).length > 0) {
-      //       // item do ano
-      //       let i = regs.findIndex(item => item.y == year);
-
-      //       dayReg = this._updateReg(regs[i], typeReg, newTime*1000);
-      //     } else {
-      //       // sem item no ano
-      //       let newRegs = this._getDefaultStructure();
-
-      //       dayReg = this._updateReg(newRegs, typeReg, newTime*1000);
-      //       regs.push(newRegs);
-      //     }
-      //     updateRegs(data.Item).then(() => {
-      //       resolve({ result: dayReg });
-      //     }).catch(err => {
-      //       logger.error(['App > addReg -> Erro ao atualizar o ponto(updateRegs):', err]);
-      //       reject(err);
-      //     });
-      //   } else {
-      //     // sem registros
-      //     let newRegs = {
-      //       userId: chatId,
-      //       regs: [this._getDefaultStructure()]
-      //     }
-      //     dayReg = this._updateReg(newRegs.regs[0], typeReg, newTime*1000);
-
-      //     setRegs(newRegs).then(() => {
-      //       resolve({ result: dayReg });
-      //     }).catch(err => {
-      //       logger.error(['App > addReg -> Erro ao atualizar o ponto(setRegs):', err]);
-      //       reject(err);
-      //     });
-      //   }
-      // }).catch(err => {
-      //   logger.error(['App > addReg -> Erro ao atualizar o ponto(getRegs):', err]);
-      //   reject(err);
-      // });
+    //       setRegs(newRegs).then(() => {
+    //         resolve({ result: dayReg });
+    //       }).catch(err => {
+    //         logger.error(['App > addReg -> Erro ao atualizar o ponto(setRegs):', err]);
+    //         reject(err);
+    //       });
+    //     }
+    //   }).catch(err => {
+    //     logger.error(['App > addReg -> Erro ao atualizar o ponto(getRegs):', err]);
+    //     reject(err);
+    //   });
     });
   }
+
+  // _setReg(item, year){
+  //   return new Promise((resolve, reject) => {
+  //     setReg(item, year).then(() => {
+  //       resolve();
+  //     }).catch(err => {
+  //       logger.error(['App > _setReg > Erro ao salvar ponto:', err]);
+  //       reject(err);
+  //     });
+  //   });
+  // }
 
   /**
    * Carrega ponto do dia
@@ -464,34 +494,32 @@ class App {
 
   /**
    * Atualiza ponto
+   * @param {object} reg
    * @param {number} typeReg - tipo reg (1, 2, 3 ou 4)
    * @param {number} dateTime - unix timestamp
    */
-  _updateReg(data, typeReg, dateTime) {
-
-    let rUpdated = null;
-
+  _updateReg(reg, typeReg, dateTime) {
     try {
-      const month = mm(dateTime).month();
-      const day   = mm(dateTime).date()-1; // array apartir de 0
-   
-      if (typeReg == 1) {                           
-        data.m[month].d[day].r.r1 = dateTime; // comeco jornada 
+      if (typeReg == 1) {
+        reg.r1 = dateTime;
+        // data.m[month].d[day].r.r1 = dateTime; // comeco jornada 
       }
       if (typeReg == 2) {
-        data.m[month].d[day].r.r2 = dateTime; // comeco almoco
+        reg.r2 = dateTime;
+        // data.m[month].d[day].r.r2 = dateTime; // comeco almoco
       }
       if (typeReg == 3) {
-        data.m[month].d[day].r.r3 = dateTime; // fim almoco 
+        reg.r3 = dateTime;
+        // data.m[month].d[day].r.r3 = dateTime; // fim almoco 
       }
       if (typeReg == 4) {
-        data.m[month].d[day].r.r4 = dateTime; // fim jornada
+        reg.r4 = dateTime;
+        // data.m[month].d[day].r.r4 = dateTime; // fim jornada
       }
-      rUpdated = data.m[month].d[day].r;
-
-      return rUpdated;
+      // rUpdated = data.m[month].d[day].r;
+      // return rUpdated;
     } catch (err) {
-      logger.error(['App > _updateReg1 -> Erro ao registrar ponto:', err]);
+      logger.error(['App > _updateReg -> Erro ao processar objeto reg:', err]);
     }
   }
 

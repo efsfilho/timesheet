@@ -46,7 +46,7 @@ class DynamoDBClient {
     return new Promise((resolve, reject) => {
       let dynamodb = new aws.DynamoDB();
 
-      let tableName = 'Register_'+year;
+      let tableName = 'Registers_'+year;
       let table = {
         TableName: tableName,
         AttributeDefinitions: [
@@ -54,8 +54,8 @@ class DynamoDBClient {
             AttributeName: 'userId',
             AttributeType: 'N'
           },{
-            AttributeName: 'day',
-            AttributeType: 'N'
+            AttributeName: 'date',
+            AttributeType: 'S'
           }
         ],
         KeySchema: [
@@ -64,7 +64,7 @@ class DynamoDBClient {
             KeyType: 'HASH'
           },
           {
-            AttributeName: 'day',
+            AttributeName: 'date',
             KeyType: 'RANGE'
           }
         ],
@@ -75,26 +75,6 @@ class DynamoDBClient {
       };
 
       dynamodb.createTable(table, (err, data) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(data);
-        }
-      });
-    });
-  }
-
-  static getDayRegs(id, year, date) {
-
-    let params = {
-      TableName: 'Registers_'+year,
-      Key: { 'userId': id }
-    };
-
-    return new Promise((resolve, reject) => {
-      let docClient = new aws.DynamoDB.DocumentClient();
-
-      docClient.get(params, (err, data) => {
         if (err) {
           reject(err);
         } else {
@@ -151,38 +131,55 @@ class DynamoDBClient {
   }
 
   /**
-   * @param {number} id
+   * @param {number} userId
    * @param {string} year
    * @param {number} date
    */
+  static getReg(userId, year, date) {
+    return new Promise((resolve, reject) => {
+      let docClient = new aws.DynamoDB.DocumentClient();
+      let params = {
+        TableName: 'Registers_'+year,
+        KeyConditionExpression: '#id = :id and #date = :date',
+        ExpressionAttributeNames:{
+          '#id': 'userId',
+          '#date': 'date'
+        },
+        ExpressionAttributeValues: {
+          ':id': userId,
+          ':date': date
+        }
+      };
+
+      docClient.query(params, (err, data) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(data);
+        }
+      });
+    });
+  }
+
+  /**
+   * @param {object} item
+   * @param {string} year
+   */
   static setReg(item, year) {
     return new Promise((resolve, reject) => {
+      let docClient = new aws.DynamoDB.DocumentClient();
+      let params = {
+        TableName: 'Registers_'+year,
+        Item: item
+      };
 
-      if (typeof(year) == 'string' && /\d{4}/.test(year)) {
-
-        let docClient = new aws.DynamoDB.DocumentClient();
-        let params = {
-          TableName: 'Registers_'+year,
-          Item: {
-            userId: item.userId,
-            day: item.day,
-            r1: 0,
-            r2: 0,
-            r3: 0,
-            r4: 0
-          }
-        };
-
-        docClient.put(params, err => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve();
-          }
-        });
-      } else {
-        reject('Erro year');
-      }
+      docClient.put(params, err => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
     });
   }
   /* Ponto */
