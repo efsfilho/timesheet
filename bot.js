@@ -7,8 +7,9 @@ const App = require('./src/app');
 const mm = require('moment');
 mm.locale('pt-BR');
 
-const key = 'chave_telegram';
-const bot = new Ntba(key, { polling: true });
+const token = process.env.TELEGRAM_TOKEN;
+
+const bot = new Ntba(token, { polling: true });
 
 const CMD = {
   START: /\/start/,

@@ -1,23 +1,17 @@
-
 # TimeSheet
-
 TimeSheet é um bot simples para controle de ponto.
 Foi utilizado o [Node Telegram Bot API](https://github.com/yagop/node-telegram-bot-api) e o [DynamoDB](https://aws.amazon.com/dynamodb/)
 
 ## Instalação
 Clone o repositório e instale as depências.
-```
+```bash
 git clone https://github.com/efsfilho/timesheet.git
 
 npm install
 ```
 
 ## Configuração 
-A chave do telegram gerada através do [@botfather](https://telegram.me/BotFather) vai no [bot.js](./bot.js):
-```js
-const key = 'chave_telegram';
-```
-no [/config/index.js](./config/index.js) estão os locais onde os logs serão salvos, arquivos de exportação enviado para os usuários, local do arquivo Excel usado como base
+No arquivo [/config/index.js](./config/index.js) estão os locais onde os logs serão salvos, arquivos de exportação enviado para os usuários, local do arquivo Excel usado como base
 ```js
 module.exports = {
   logDir: './log/', // local dos logs
@@ -25,7 +19,7 @@ module.exports = {
   exportModelFileName: './src/file.xlsx', // arquivo excel modelo para exportacao
 ```
 e a região do serviço do DynamoDB([AWS Regions and EndPoints](https://docs.aws.amazon.com/general/latest/gr/rande.html))
-``` js
+```js
   AWS_REGION: 'us-east-1'
 };
 ```
@@ -37,19 +31,39 @@ aws.config.update({
 });
 ```
 Após configurado o acesso ao DynamoDB, crie as tabelas executando:
-```
+```bash
 npm run createdb
 ```
-e execute o bot:
+
+## Executando o bot
+Para executar o bot você precisará criar um contato bot do Telegram. Para criar o contato envie o comando `/newbot` para o [Botfather](https://telegram.me/BotFather)
+
+![newbot](https://raw.githubusercontent.com/efsfilho/timesheet/4016c51e9d27a774591ac41b8721aa6d0a3e2dbc/newbot.png)
+
+Digite o nome que será o contato/usuário do bot e em seguida você receberá o token de identificação do seu bot
+
+![token](https://raw.githubusercontent.com/efsfilho/timesheet/4016c51e9d27a774591ac41b8721aa6d0a3e2dbc/newbot2.png)
+
+
+Depois que gerar o token, configure o token na variável de ambiente TELEGRAM_TOKEN, execute o bot:
+```bash
+TELEGRAM_TOKEN=123456789:ABCDEF1234567890abcdef1234567890 node bot.js
 ```
-npm start
-```
-## Comandos do bot
+
+## Uso do bot
+Pesquise o contato do seu bot
+
+exemplo: [cartaobot](https://telegram.me/cartaobot)
+
+![pesquisa](https://raw.githubusercontent.com/efsfilho/timesheet/4016c51e9d27a774591ac41b8721aa6d0a3e2dbc/pesquisabot.png)
+
+![start](https://raw.githubusercontent.com/efsfilho/timesheet/4016c51e9d27a774591ac41b8721aa6d0a3e2dbc/startbot.png)
+
 `/c1` ou `Começo de Jornada`: registro de comeco de jornada
 
-`/c2` ou `Almoço`           : registro de início de almoco
+`/c2` ou `Almoço`           : registro de início de almoço
 
-`/c3` ou `Volta do almoço`  : registro de volta de almoco
+`/c3` ou `Volta do almoço`  : registro de volta de almoço
 
 `/c4` ou `Fim de jornada`   : fim de jornada
 
@@ -61,4 +75,5 @@ npm start
 
 `/exp`                      : exporta folha(excel)
 
-
+## TODO
++ Controle de usuários
