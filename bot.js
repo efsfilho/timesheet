@@ -423,8 +423,7 @@ class Bot {
   _callbackQueryKeyBoardRegs(cbQueryData, date, opts) {
     let strDate = cbQueryData.replace(/\+/, '');
     /* TODO fazer uma validacao decente */
-    return this._app.mountKeyboardRegs(opts.chat_id, strDate).then(res => {
-  
+    this._app.mountKeyboardRegs(opts.chat_id, strDate).then(res => {
       let cbCalendar = '*'+mm(date*1000).format('YYYY-MM');
       let inlineKb = res.result.inline_keyboard[0].slice();
       inlineKb.push({ text: 'Pontos', callback_data: cbCalendar });

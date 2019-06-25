@@ -240,70 +240,50 @@ class App {
     return new Promise((resolve, reject) => {
       /* TODO validar as pesquisas */
 
-      this._getReg(chatId, date).then(res => {
-
-        let data = res.result;
+      let year = mm(date).format('YYYY');
+      getReg(chatId, year, date).then(data => {
+        let item = this._getNewItem(chatId, date);
+        if (data.hasOwnProperty('Items') && data.Count > 0) {
+          item = data.Items[0];
+        }
         let key = [[
           {
-            text: data.r1 > 0 ? mm(data.r1).format('HH:mm') : '-',
-            callback_data: '.1'+data.date
+            text: item.r1 > 0 ? mm(item.r1).format('HH:mm') : '-',
+            callback_data: '.1'+item.date
           },{
-            text: data.r2 > 0 ? mm(data.r2).format('HH:mm') : '-',
-            callback_data: '.2'+data.date
+            text: item.r2 > 0 ? mm(item.r2).format('HH:mm') : '-',
+            callback_data: '.2'+item.date
           },{
-            text: data.r3 > 0 ? mm(data.r3).format('HH:mm') : '-',
-            callback_data: '.3'+data.date
+            text: item.r3 > 0 ? mm(item.r3).format('HH:mm') : '-',
+            callback_data: '.3'+item.date
           },{
-            text: data.r4 > 0 ? mm(data.r4).format('HH:mm') : '-',
-            callback_data: '.4'+data.date
+            text: item.r4 > 0 ? mm(item.r4).format('HH:mm') : '-',
+            callback_data: '.4'+item.date
           }
         ]];
-
         resolve({ result: { inline_keyboard: key } });
       }).catch(err => {
         logger.error(['App > mountKeyboardRegs -> Erro ao criar teclado com registros:', err]);
         reject(err);
-      });    
+      });
     });
   }
 
-  /** Cria objeto com regs de um ano */
-  _getDefaultStructure() {
-
-    let months = [];
-    let days = [];
-    let dayMonth = 0;
-
-    for (let i = 0; i < 12; i++) {
-      dayMonth = mm({ month: i }).daysInMonth();          // quantidade de dias do mes
-
-      for (let l = 1; l <= dayMonth; l++) {
-        days.push({
-          d: l,                                           // dia
-          r: {                                            // registros do dia
-            r1: 0,                                        // primeiro registro
-            r2: 0,                                        // segundo
-            r3: 0,
-            r4: 0                                         // quarto
-          }
-        });
-      }
-
-      months.push({
-        m: mm({month: i}).month(),                        // mês i
-        d: days
-      });
-
-      days = [];
-    }
-
-    let regStructure = {
-      y: Number(mm().format('YYYY')),  // ano atual
-      c: mm().format(),        // data/hora atual
-      m: months
+  /**
+   * Cria objeto com regs de um ano 
+   * @param {number} chatId
+   * @param {string} date - YYYY-MM-DD
+   */
+  _getNewItem(chatId, date) {
+    let item = {
+      userId: chatId,
+      date: date,
+      r1: 0,
+      r2: 0,
+      r3: 0,
+      r4: 0
     };
-
-    return regStructure;
+    return item;
   }
 
   /**
@@ -319,14 +299,7 @@ class App {
       let year = mm(newTime).year().toString();
       
       getReg(chatId, year, date).then(data => {
-        let item = {
-          userId: chatId,
-          date: date,
-          r1: 0,
-          r2: 0,
-          r3: 0,
-          r4: 0
-        };
+        let item = this._getNewItem(chatId, date);
 
         if (data.hasOwnProperty('Items') && data.Count > 0) {
           item = data.Items[0];
