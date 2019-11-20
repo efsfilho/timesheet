@@ -3,7 +3,8 @@ const mm = require('moment');
 const xlsx = require('xlsx');
 const logger = require('./logger');
 const { logDir, exportDir, exportModelFileName } = require('../config/index');
-const { getUsers, setUser, getReg, setReg, createTableReg, setRegs, updateRegs} = require('./dynamo');
+const { getUsers, getRegs, setRegs } = require('./db/firestore');
+const { setUser, getReg, setReg, createTableReg, updateRegs} = require('./dynamo');
 
 /** App */
 class App {
@@ -14,6 +15,7 @@ class App {
     this._userIdAdmin = 0;
     this._statusNewUsers = true; // status dos novos usuarios
     this._users = []; // usuarios sincronizados
+    // this._fireStore = new FireStore();
   }
 
   init() {
@@ -25,7 +27,8 @@ class App {
     }
 
     getUsers().then(users => {
-      this._users = users.Items;
+      console.log(users)
+      this._users = users;
       logger.info(['Usuarios carregados: ', this._users.length])
     }).catch(err => {
       logger.error(['App > init -> Erro ao carregar usuários', err]);
@@ -269,6 +272,45 @@ class App {
     });
   }
 
+  /** Cria objeto com regs de um ano */
+  _getDefaultStructure() {
+
+    let months = [];
+    let days = [];
+    let dayMonth = 0;
+
+    for (let i = 0; i < 12; i++) {
+      dayMonth = mm({ month: i }).daysInMonth();          // quantidade de dias do mes
+
+      for (let l = 1; l <= dayMonth; l++) {
+        days.push({
+          d: l,                                           // dia
+          r: {                                            // registros do dia
+            r1: 0,                                        // primeiro registro
+            r2: 0,                                        // segundo
+            r3: 0,
+            r4: 0                                         // quarto
+          }
+        });
+      }
+
+      months.push({
+        m: mm({month: i}).month(),                        // mês i
+        d: days
+      });
+
+      days = [];
+    }
+
+    let regStructure = {
+      y: Number(mm().format('YYYY')),  // ano atual
+      c: mm().format(),        // data/hora atual
+      m: months
+    };
+
+    return regStructure;
+  }
+
   /**
    * Cria objeto com regs de um ano 
    * @param {number} chatId
@@ -295,47 +337,40 @@ class App {
   addReg(chatId, typeReg, newTime) {
     return new Promise((resolve, reject) => {
       newTime = newTime*1000;
-      let date = mm(newTime).format('YYYY-MM-DD');
-      let year = mm(newTime).year().toString();
-      
-      getReg(chatId, year, date).then(data => {
-        let item = this._getNewItem(chatId, date);
+      const date = mm(newTime).format('YYYY-MM-DD');
+      const year = mm(newTime).year().toString();
+      getRegs(chatId, year)
+        .then(data => {
 
-        if (data.hasOwnProperty('Items') && data.Count > 0) {
-          item = data.Items[0];
-        }
+          var regs = {};
+          if (data != null) {
+            regs = data; // procura item do ano
+          } else {
+            //   sem registros
+            regs = {
+              // TODO passar userId e regs para dentro do _getDefaultStructure
+              userId: chatId,
+              regs: this._getDefaultStructure()
+            }
+            // dayReg = this._updateReg(regs, typeReg, newTime*1000);
+          }
 
-        this._updateReg(item, typeReg, newTime);
-        setReg(item, year).then(() => {
-          resolve({ result: item });
-        }).catch(err => {
-          logger.error(['App > addReg > setReg -> Erro ao salvar ponto:', err]);
+          let dayReg = this._updateReg(regs, typeReg, newTime);
+
+          setRegs(regs)
+            .then(() => {
+              resolve({ result: dayReg });
+            })
+            .catch(err => {
+              logger.error(['App > addReg -> Erro ao atualizar o ponto(updateRegs):', err]);
+              reject(err);
+            });
+        })
+        .catch(err => {
+          logger.error(['App > addReg -> Erro ao atualizar o ponto(getRegs):', err]);
           reject(err);
         });
-      }).catch(err => {
-        if (err.message == 'Requested resource not found') {
-          // tabela nao encontrada
-
-          // TODO validacao do err
-          createTableReg(year).then(() => {
-            setTimeout(() => {
-              setReg(item, year).then(() => {
-                resolve({ result: item });
-              }).catch(err => {
-                logger.error(['App > addReg > setReg -> Erro ao registrar ponto depois de criar a tabela:', err]);
-                reject(err);
-              });
-            }, 5000);
-          }).catch(err => {
-            logger.error(['App > addReg > createTableReg -> Erro ao criar tabela:', err]);
-            reject(err);
-          });
-        } else {
-          logger.error(['App > addReg > getReg -> Erro ao registrar ponto:', err]);
-          reject(err);
-        }
-      });
-    });
+    })
   }
 
   /**
@@ -346,7 +381,6 @@ class App {
     return new Promise((resolve, reject) => {
       /* TODO validar as pesquisas */
       this._getReg(chatId, date).then(res => {
-
         let rUpdated = {
           r1: res.result.r1 > 0 ? mm(res.result.r1).format('HH:mm') : '  -  ',
           r2: res.result.r2 > 0 ? mm(res.result.r2).format('HH:mm') : '  -  ',
@@ -412,32 +446,34 @@ class App {
 
   /**
    * Atualiza ponto
-   * @param {object} reg
+   * @param {object} data
    * @param {number} typeReg - tipo reg (1, 2, 3 ou 4)
    * @param {number} dateTime - unix timestamp
    */
-  _updateReg(reg, typeReg, dateTime) {
+  _updateReg(data, typeReg, dateTime) {
+
+    let dayReg = null;
     try {
-      if (typeReg == 1) {
-        reg.r1 = dateTime;
-        // data.m[month].d[day].r.r1 = dateTime; // comeco jornada 
+      const month = mm(dateTime).month();
+      const day   = mm(dateTime).date()-1; // array apartir de 0
+
+      if (typeReg == 1) {                           
+        data.regs.m[month].d[day].r.r1 = dateTime; // comeco jornada 
       }
       if (typeReg == 2) {
-        reg.r2 = dateTime;
-        // data.m[month].d[day].r.r2 = dateTime; // comeco almoco
+        data.regs.m[month].d[day].r.r2 = dateTime; // comeco almoco
       }
       if (typeReg == 3) {
-        reg.r3 = dateTime;
-        // data.m[month].d[day].r.r3 = dateTime; // fim almoco 
+        data.regs.m[month].d[day].r.r3 = dateTime; // fim almoco 
       }
       if (typeReg == 4) {
-        reg.r4 = dateTime;
-        // data.m[month].d[day].r.r4 = dateTime; // fim jornada
+        data.regs.m[month].d[day].r.r4 = dateTime; // fim jornada
       }
-      // rUpdated = data.m[month].d[day].r;
-      // return rUpdated;
+      dayReg = data.regs.m[month].d[day].r;
+      return dayReg;
+
     } catch (err) {
-      logger.error(['App > _updateReg -> Erro ao processar objeto reg:', err]);
+      logger.error(['App > _updateReg1 -> Erro ao registrar ponto:', err]);
     }
   }
 
@@ -449,26 +485,27 @@ class App {
   _getReg(chatId, dateTime) {
     return new Promise((resolve, reject) => {
 
-      getRegs(chatId).then(data => {
+      const year = mm(dateTime).year().toString();
+      getRegs(chatId, year).then(data => {
 
-        let regs = data.Item.regs;
-        let year  = mm(dateTime).year();
+        let regs = data.regs;
+        // let year  = mm(dateTime).year();
         let month = mm(dateTime).month();
         let day   = mm(dateTime).date()-1; // array apartir do 0
         
         try {
-          for (let i = 0; i < regs.length; i++) {
-            if(regs[i].y == year){ // regs[i].y number
+          // for (let i = 0; i < regs.length; i++) {
+            // if(regs[i].y == year){ // regs[i].y number
               let reg = {
                 date: mm(dateTime).format('YYYY-MM-DD'),
-                r1: regs[i].m[month].d[day].r.r1,
-                r2: regs[i].m[month].d[day].r.r2,
-                r3: regs[i].m[month].d[day].r.r3,
-                r4: regs[i].m[month].d[day].r.r4
+                r1: regs.m[month].d[day].r.r1,
+                r2: regs.m[month].d[day].r.r2,
+                r3: regs.m[month].d[day].r.r3,
+                r4: regs.m[month].d[day].r.r4
               };
               resolve({ result: reg });
-            }
-          }
+            // }
+          // }
         } catch(err) {
           logger.error(['App > _getReg -> Erro ao recuperar registros:', err]);
           reject(err);

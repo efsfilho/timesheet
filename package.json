@@ -21,6 +21,7 @@
   "homepage": "https://github.com/efsfilho/timesheet#readme",
   "dependencies": {
     "aws-sdk": "^2.437.0",
+    "firebase-admin": "^8.7.0",
     "moment": "^2.22.2",
     "node-telegram-bot-api": "^0.30.0",
     "winston": "^3.2.1",

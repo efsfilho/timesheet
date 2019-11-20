@@ -7,7 +7,7 @@ const App = require('./src/app');
 const mm = require('moment');
 mm.locale('pt-BR');
 
-const token = '';
+const token = process.env['BOT1'];
 
 const bot = new Ntba(token, { polling: true });
 
@@ -381,14 +381,15 @@ class Bot {
 
 
   _commandReg(chatId, typeReg, newTime) {
-    this._app.addReg(chatId, typeReg, newTime).then(res => {
-
-      let replyMsg = this._defaultMessageUpdateReg(res.result, typeReg, newTime);
-      bot.sendMessage(chatId, replyMsg);
-    }).catch(err => {
-      logger.error(['Bot > _commandReg -> Erro ao registrar ponto:', err]);
-      this._defaultMessageError(chatId);
-    });
+    this._app.addReg(chatId, typeReg, newTime)
+      .then(res => {
+        let replyMsg = this._defaultMessageUpdateReg(res.result, typeReg, newTime);
+        bot.sendMessage(chatId, replyMsg);
+      })
+      .catch(err => {
+        logger.error(['Bot > _commandReg -> Erro ao registrar ponto:', err]);
+        this._defaultMessageError(chatId);
+      });
   }
 
 
