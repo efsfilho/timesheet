@@ -5,7 +5,7 @@ const Ntba = require('node-telegram-bot-api');
 const logger = require('./src/logger');
 const App = require('./src/app');
 const mm = require('moment');
-mm.locale('pt-BR');
+// mm.locale('pt-br');
 
 const token = process.env['BOT1'];
 
@@ -14,7 +14,7 @@ const bot = new Ntba(token, { polling: true });
 const CMD = {
   START: /\/start/,
   P1: /^\/c1\b|^Começo\sde\sjornada\b/,   // /c1  - comando para registro de comeco de jornada
-  P2: /^\/c2\b|^Almoço\b/,                // /c2  - ' ' registro de almoco
+  P2: /^\/c2\b|^Almoço\b/,                  // /c2  - ' ' registro de almoco
   P3: /^\/c3\b|^Volta\sdo\salmoço\b/,     // /c3  - ' ' registro de volta de almoco
   P4: /^\/c4\b|^Fim\sde\sjornada\b/,      // /c4  - ' ' registro de fim de jornada
   SHORTCUT: /\/atalho/,                   // /atalho
@@ -84,7 +84,7 @@ class Bot {
     this._onText(/usr/, msg => {
       let msgToSend = '';
       this._app._users.forEach(item => {
-        console.log(item);
+        //console.log(item);
         msgToSend = msgToSend+`${item.id} ${item.first_name} ${item.last_name} ${item.username}\n`
       });
       bot.sendMessage(msg.chat.id, msgToSend);
@@ -126,7 +126,6 @@ class Bot {
         
         /* para tempo digitado ex /C1 1010 */
         this._app.getTimeFromString(textMsg).then(time => {
-
           let newTime = mm(strDate+' '+time.result);
           this._commandReg(chatId, 1, newTime.unix());
         }).catch(err => {

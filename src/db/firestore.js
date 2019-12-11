@@ -59,15 +59,14 @@ class FireStore {
   static getRegs(userId, year) {
     return new Promise((resolve, reject) => {
       const item = `${userId}_${year}`;
-      console.log(item)
       fireStore.collection('registers')
         .doc(item)
         .get()
         .then(regsData => {
-          if (!regsData.exists) {
-            resolve(null);
-          } else {
+          if (regsData.exists) {
             resolve(regsData.data());
+          } else {
+            resolve(null);
           }
         })
         .catch(err => reject(err));
@@ -76,7 +75,7 @@ class FireStore {
 
   static setRegs(regs) {
     const regDoc = `${regs.userId}_${regs.regs.y}`;
-    console.log(regDoc)
+    // console.log(regDoc)
     return fireStore.collection('registers')
       .doc(regDoc)
       .set(regs)

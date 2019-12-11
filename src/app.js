@@ -582,18 +582,18 @@ class App {
   _processFileToExport(data) {
     return new Promise((resolve, reject) => {
 
-      let obj = data;
+      let obj = data.regs;
       let year = 0;
       let month = 0;
       let day = 0;
       let regsObj = [];
-
+      // console.log(data);
       try {
-        for (let i = 0; i < obj.length; i++) {
-          let objYear = obj[i];
-          year = objYear.y;
-          for(let j = 0; j < objYear.m.length; j++){
-            let objMonth = objYear.m[j];
+        // for (let i = 0; i < obj.length; i++) {
+          // let objYear = obj[i];
+          year = obj.y;
+          for(let j = 0; j < obj.m.length; j++){
+            let objMonth = obj.m[j];
             month = objMonth.m+1;
             for (let l = 0; l < objMonth.d.length; l++) {
               day = l+1;
@@ -608,7 +608,7 @@ class App {
               }
             }
           }
-        }
+        // }
         
         resolve({ result: regsObj });
       } catch (err) {
@@ -641,11 +641,12 @@ class App {
     return new Promise((resolve, reject) => {
 
       const outFileName = exportDir+chatId+'.xlsx'; // arquivo a ser exportado
-
-      getRegs(chatId).then(data => {
+      const year = mm().year().toString();
+      getRegs(chatId, year).then(data => {
 
         // let regs = data.Item.regs;
-        this._processFileToExport(data.Item.regs).then(res => { // processa arquivo json
+        this._processFileToExport(data).then(res => { // processa arquivo json
+          
           /* TODO criar excel em runtime */
           // file = xlsx.utils.book_new();
 
@@ -658,7 +659,6 @@ class App {
           } else {
             reject('App > export -> xlsx base não encontrado');
           }
-
           try {
             for (let i = 0; i < regs.length; i++) {
               this._addDate(file.Sheets.Plan1, 'A'+(i+1), regs[i].date);
