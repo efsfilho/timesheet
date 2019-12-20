@@ -3,8 +3,8 @@ const mm = require('moment');
 const xlsx = require('xlsx');
 const logger = require('./logger');
 const { logDir, exportDir, exportModelFileName } = require('../config/index');
-const { getUsers, getRegs, setRegs } = require('./db/firestore');
-const { setUser, getReg, setReg, createTableReg, updateRegs} = require('./dynamo');
+const { setUser, getUsers, getReg, getRegs, setRegs } = require('./db/firestore');
+// const { getReg, setReg, createTableReg, updateRegs} = require('./dynamo');
 
 /** App */
 class App {
@@ -27,7 +27,6 @@ class App {
     }
 
     getUsers().then(users => {
-      console.log(users)
       this._users = users;
       logger.info(['Usuarios carregados: ', this._users.length])
     }).catch(err => {
@@ -88,7 +87,6 @@ class App {
       user.date = mm().format();
 
       setUser(user).then(() => {
-
         this._users.push(user);
         let userInfo = {
           id: user.id,
@@ -162,7 +160,7 @@ class App {
           let days = res.result;
           let weekCount = 6;
           let buttons = [];
-          
+
           for (let i = 0; i < days.length; i++) {
             
             let button = {
@@ -242,13 +240,12 @@ class App {
   mountKeyboardRegs(chatId, date) {
     return new Promise((resolve, reject) => {
       /* TODO validar as pesquisas */
+      const year = mm(date).format('YYYY');
 
-      let year = mm(date).format('YYYY');
       getReg(chatId, year, date).then(data => {
-        let item = this._getNewItem(chatId, date);
-        if (data.hasOwnProperty('Items') && data.Count > 0) {
-          item = data.Items[0];
-        }
+
+        let item = this._getButtonValues(chatId, data, date);
+
         let key = [[
           {
             text: item.r1 > 0 ? mm(item.r1).format('HH:mm') : '-',
@@ -264,6 +261,7 @@ class App {
             callback_data: '.4'+item.date
           }
         ]];
+
         resolve({ result: { inline_keyboard: key } });
       }).catch(err => {
         logger.error(['App > mountKeyboardRegs -> Erro ao criar teclado com registros:', err]);
@@ -316,16 +314,31 @@ class App {
    * @param {number} chatId
    * @param {string} date - YYYY-MM-DD
    */
-  _getNewItem(chatId, date) {
-    let item = {
-      userId: chatId,
-      date: date,
-      r1: 0,
-      r2: 0,
-      r3: 0,
-      r4: 0
-    };
-    return item;
+  _getButtonValues(chatId, data, date) {
+    const month = mm(date).month();
+    const day   = mm(date).date()-1; // meses de 0 a 11
+    // TODO refazer
+    if (data != null) {
+      let regs = data.regs.m[month].d[day];
+
+      return {
+        userId: chatId,
+        date: date,
+        r1: regs.r.r1,
+        r2: regs.r.r2,
+        r3: regs.r.r3,
+        r4: regs.r.r4
+      };
+    } else {
+      return {
+        userId: chatId,
+        date: date,
+        r1: 0,
+        r2: 0,
+        r3: 0,
+        r4: 0
+      };
+    }
   }
 
   /**
@@ -555,7 +568,7 @@ class App {
     // let h = mm(time).hours();
     // let m = mm(time).minutes();
     let f = mm(time).format('HH:mm');
-  
+
     let cell = {
       t:'s',    // s = number format
       // v: m,
@@ -587,7 +600,7 @@ class App {
       let month = 0;
       let day = 0;
       let regsObj = [];
-      // console.log(data);
+
       try {
         // for (let i = 0; i < obj.length; i++) {
           // let objYear = obj[i];

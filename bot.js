@@ -1,3 +1,5 @@
+
+process.env.TZ = 'America/Fortaleza'; // TODO fix https://github.com/nodejs/node/issues/29540
 process.env['NTBA_FIX_319'] = 1; // Deprecated issue https://github.com/yagop/node-telegram-bot-api/issues/319
 process.env['NTBA_FIX_350'] = 1; // Deprecated issue https://github.com/yagop/node-telegram-bot-api/blob/master/doc/usage.md#sending-files
 
@@ -5,7 +7,6 @@ const Ntba = require('node-telegram-bot-api');
 const logger = require('./src/logger');
 const App = require('./src/app');
 const mm = require('moment');
-// mm.locale('pt-br');
 
 const token = process.env['BOT1'];
 
@@ -84,7 +85,6 @@ class Bot {
     this._onText(/usr/, msg => {
       let msgToSend = '';
       this._app._users.forEach(item => {
-        //console.log(item);
         msgToSend = msgToSend+`${item.id} ${item.first_name} ${item.last_name} ${item.username}\n`
       });
       bot.sendMessage(msg.chat.id, msgToSend);
