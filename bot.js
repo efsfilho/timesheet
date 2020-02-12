@@ -8,7 +8,7 @@ const logger = require('./src/logger');
 const App = require('./src/app');
 const mm = require('moment');
 
-const token = process.env['BOT1'];
+const token = process.env['BOTDEV'];
 
 const bot = new Ntba(token, { polling: true });
 
@@ -36,6 +36,7 @@ class Bot {
     /* inicia listeners de comandos */
     this._startListeners();
     /*  listeners de erro */
+    this._pollEfatalErrorCount = 0;
     this._errorHandlingListeners();
     /* flag de modo atalho */
     this._shortcutMode = false;
@@ -587,9 +588,19 @@ class Bot {
 
   /** Error listeners */
   _errorHandlingListeners() {
-    bot.on('polling_error', err => logger.error(['Polling error - ', err]));
     bot.on('webhook_error', err => logger.error(['Webhook error - ', err]));
     bot.on('error', err => logger.error(['Bot -> _errorHandlingListeners:', err]));
+    bot.on('polling_error', err => {
+      if (err.code == 'EFATAL' ) {
+        this._pollEfatalErrorCount++;
+        if (this._pollEfatalErrorCount > 100) {
+          logger.error(['Polling error', err]);
+          this._pollEfatalErrorCount = 0;
+        }
+      } else {
+        logger.error(['Polling error', err]);
+      }
+    });
   }
 }
 
