@@ -1,7 +1,7 @@
 const fs = require('fs');
 const mm = require('moment');
 const xlsx = require('xlsx');
-const logger = require('./logger');
+const logger = require('./config/logger.js');
 const { logDir, exportDir, exportModelFileName } = require('../config/index');
 const { setUser, getUsers, getReg, getRegs, setRegs } = require('./db/firestore');
 // const { getReg, setReg, createTableReg, updateRegs} = require('./dynamo');

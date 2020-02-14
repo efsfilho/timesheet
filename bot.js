@@ -4,7 +4,7 @@ process.env['NTBA_FIX_319'] = 1; // Deprecated issue https://github.com/yagop/no
 process.env['NTBA_FIX_350'] = 1; // Deprecated issue https://github.com/yagop/node-telegram-bot-api/blob/master/doc/usage.md#sending-files
 
 const Ntba = require('node-telegram-bot-api');
-const logger = require('./src/logger');
+const logger = require('./src/config/logger');
 const App = require('./src/app');
 const mm = require('moment');
 
