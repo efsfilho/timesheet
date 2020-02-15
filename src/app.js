@@ -2,9 +2,13 @@ const fs = require('fs');
 const mm = require('moment');
 const xlsx = require('xlsx');
 const logger = require('./config/logger.js');
-const { logDir, exportDir, exportModelFileName } = require('../config/index');
+const { checkDir } = require('./utils/util');
 const { setUser, getUsers, getReg, getRegs, setRegs } = require('./db/firestore');
-// const { getReg, setReg, createTableReg, updateRegs} = require('./dynamo');
+
+// TODO config file
+const logDir = './log/';
+const exportDir = './exports/';
+const exportModelFileName = './src/file.xlsx';
 
 /** App */
 class App {
@@ -20,10 +24,10 @@ class App {
 
   init() {
     try {
-      this._checkDir(logDir); // verifica/cria local dos logs
-      this._checkDir(exportDir); // verifica/cria local temporario dos arquivos para exportacao
+      checkDir(logDir); // verifica/cria local dos logs
+      checkDir(exportDir); // verifica/cria local temporario dos arquivos para exportacao
     } catch (err) {
-      logger.error(['App > init -> Erro ao criar dirertórios:', err]);
+      logger.error(`App > init -> Erro ao criar dirertórios: ${err}`);
     }
 
     getUsers().then(users => {
@@ -32,19 +36,6 @@ class App {
     }).catch(err => {
       logger.error(['App > init -> Erro ao carregar usuários', err]);
     });
-  }
-
-  /** Cria diretorio se nao existir */
-  _checkDir(dir) {
-    if (!fs.existsSync(dir)) {
-      fs.mkdir(dir, err => {
-        if (err) {
-          throw err
-        } else {
-          logger.info('Diretorio criado: '+dir);
-        }
-      });
-    }
   }
 
   /**
