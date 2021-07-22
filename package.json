@@ -24,7 +24,7 @@
     "moment": "^2.22.2",
     "node-telegram-bot-api": "^0.30.0",
     "winston": "^3.2.1",
-    "xlsx": "^0.13.3"
+    "xlsx": "^0.17.0"
   },
   "nodemonConfig": {
     "ignore": [
